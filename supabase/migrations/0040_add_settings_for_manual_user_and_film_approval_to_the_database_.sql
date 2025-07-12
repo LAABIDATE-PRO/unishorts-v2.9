@@ -1,0 +1,3 @@
+ALTER TABLE public.platform_settings
+ADD COLUMN IF NOT EXISTS manual_user_approval BOOLEAN DEFAULT TRUE,
+ADD COLUMN IF NOT EXISTS manual_film_review BOOLEAN DEFAULT TRUE;

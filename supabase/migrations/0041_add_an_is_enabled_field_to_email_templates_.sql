@@ -1,0 +1,2 @@
+ALTER TABLE public.email_templates
+ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE NOT NULL;
