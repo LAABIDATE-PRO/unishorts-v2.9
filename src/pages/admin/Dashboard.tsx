@@ -131,7 +131,7 @@ const AdminDashboard = () => {
                   stroke="hsl(var(--card))"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {filmStatusData.map((entry, index) => (
+                  {filmStatusData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

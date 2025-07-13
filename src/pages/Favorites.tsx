@@ -7,7 +7,6 @@ import { Film } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError } from '@/utils/toast';
 import { Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 
 const Favorites = () => {

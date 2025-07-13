@@ -3,7 +3,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Film, Upload, User, LogOut, LayoutDashboard, Settings, Bell, Sparkles } from 'lucide-react';
+import { Menu, Film, User, LogOut, LayoutDashboard, Settings, Bell, Sparkles } from 'lucide-react';
 import { useSession } from '@/components/SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

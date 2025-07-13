@@ -87,7 +87,7 @@ const Settings = () => {
   };
   
   const handleImageSelectAndUpload = async (file: File | null) => {
-    if (!file || !session?.user) return;
+    if (!file || !session) return;
 
     const toastId = showLoading('Uploading image...');
     try {

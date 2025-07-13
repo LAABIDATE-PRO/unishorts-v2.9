@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 
 const fetchTemplates = async (): Promise<EmailTemplate[]> => {
