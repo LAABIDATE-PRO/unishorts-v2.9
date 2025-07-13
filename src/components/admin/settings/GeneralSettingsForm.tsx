@@ -16,7 +16,6 @@ const generalSettingsSchema = z.object({
   timezone: z.string(),
   maintenance_mode: z.boolean(),
   maintenance_message: z.string().optional(),
-  manual_user_approval: z.boolean(),
 });
 
 interface GeneralSettingsFormProps {
@@ -34,7 +33,6 @@ const GeneralSettingsForm = ({ settings, onUpdate }: GeneralSettingsFormProps) =
       timezone: settings.timezone || 'UTC',
       maintenance_mode: settings.maintenance_mode || false,
       maintenance_message: settings.maintenance_message || '',
-      manual_user_approval: settings.manual_user_approval ?? true,
     },
   });
 
@@ -120,19 +118,6 @@ const GeneralSettingsForm = ({ settings, onUpdate }: GeneralSettingsFormProps) =
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="manual_user_approval"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>Manual Account Approval</FormLabel>
-                  <FormDescription>Require admin approval for all new user registrations.</FormDescription>
-                </div>
-                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="maintenance_mode"
