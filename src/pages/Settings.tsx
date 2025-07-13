@@ -87,7 +87,7 @@ const Settings = () => {
   };
   
   const handleImageSelectAndUpload = async (file: File | null) => {
-    if (!file || !session) return;
+    if (!file || !session || !session.user) return;
 
     const toastId = showLoading('Uploading image...');
     try {
@@ -190,7 +190,7 @@ const Settings = () => {
                   </FormItem>
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl><Input value={session.user.email} disabled /></FormControl>
+                    <FormControl><Input value={session?.user?.email || ''} disabled /></FormControl>
                   </FormItem>
                   <FormField control={profileForm.control} name="university_email" render={({ field }) => (
                     <FormItem><FormLabel>University Email</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>

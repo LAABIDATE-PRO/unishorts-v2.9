@@ -35,10 +35,15 @@ export const CookieConsentProvider = ({ children }: { children: ReactNode }) => 
     try {
       const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
       if (savedConsent) {
-        const { preferences: savedPreferences } = JSON.parse(savedConsent);
-        setPreferences(savedPreferences);
-        setHasConsent(true);
-        setIsBannerVisible(false);
+        const parsedData = JSON.parse(savedConsent);
+        if (parsedData && typeof parsedData.preferences === 'object' && parsedData.preferences !== null) {
+          const finalPreferences = { ...defaultPreferences, ...parsedData.preferences };
+          setPreferences(finalPreferences);
+          setHasConsent(true);
+          setIsBannerVisible(false);
+        } else {
+          setIsBannerVisible(true);
+        }
       } else {
         setIsBannerVisible(true);
       }

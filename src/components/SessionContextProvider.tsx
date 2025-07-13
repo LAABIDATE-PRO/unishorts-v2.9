@@ -97,38 +97,35 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       return;
     }
 
-    // If session exists, but profile is not loaded yet, wait.
-    if (!profile) {
-      return;
-    }
+    // If session exists, check for profile and apply routing logic
+    if (profile) {
+      const status = profile.account_status;
+      const params = new URLSearchParams(location.search);
+      const redirectTo = params.get('redirectTo');
 
-    // --- Main Logic: User is logged in and profile is loaded ---
-    const status = profile.account_status;
-    const params = new URLSearchParams(location.search);
-    const redirectTo = params.get('redirectTo');
-
-    if (status === 'pending' && currentPath !== '/pending-approval') {
-      navigate('/pending-approval', { replace: true });
-      return;
-    }
-
-    if ((status === 'rejected' || status === 'disabled') && currentPath !== '/rejected') {
-      navigate('/rejected', { replace: true });
-      return;
-    }
-
-    if (status === 'active') {
-      // If user is active but on a special page, redirect them away
-      if (specialAccessRoutes.includes(currentPath)) {
-        navigate('/', { replace: true });
+      if (status === 'pending' && currentPath !== '/pending-approval') {
+        navigate('/pending-approval', { replace: true });
         return;
       }
-      // If user is on a public-only page (login/register), redirect them
-      if (publicOnlyRoutes.includes(currentPath)) {
-        if (profile.role === 'admin' || profile.role === 'moderator') {
-          setShowAdminChoice(true);
+
+      if ((status === 'rejected' || status === 'disabled') && currentPath !== '/rejected') {
+        navigate('/rejected', { replace: true });
+        return;
+      }
+
+      if (status === 'active') {
+        // If user is active but on a special page, redirect them away
+        if (specialAccessRoutes.includes(currentPath)) {
+          navigate('/', { replace: true });
+          return;
         }
-        navigate(redirectTo || '/', { replace: true });
+        // If user is on a public-only page (login/register), redirect them
+        if (publicOnlyRoutes.includes(currentPath)) {
+          if (profile.role === 'admin' || profile.role === 'moderator') {
+            setShowAdminChoice(true);
+          }
+          navigate(redirectTo || '/', { replace: true });
+        }
       }
     }
   }, [session, profile, isLoading, location, navigate]);
