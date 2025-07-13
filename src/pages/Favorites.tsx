@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showError } from '@/utils/toast';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
 
 const Favorites = () => {
   const { session } = useSession();
@@ -42,6 +43,7 @@ const Favorites = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-6 flex items-center">
           <Heart className="mr-3 text-red-500" />
           Favorites

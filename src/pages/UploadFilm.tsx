@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import FileUpload from '@/components/FileUpload';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import BackButton from '@/components/BackButton';
+import AiKeywordGenerator from '@/components/AiKeywordGenerator';
 
 const countries = ["Saudi Arabia", "United Arab Emirates", "Egypt", "Morocco", "USA", "UK"];
 const genres = ["Drama", "Documentary", "Comedy", "Horror", "Animation", "Experimental"];
@@ -74,7 +76,15 @@ const UploadFilm = () => {
     },
   });
 
+  const title = form.watch('title');
   const description = form.watch('description');
+  const tags = form.watch('tags') || '';
+
+  const handleAddTag = (tag: string) => {
+    const currentTags = form.getValues('tags') || '';
+    const newTags = currentTags ? `${currentTags}, ${tag}` : tag;
+    form.setValue('tags', newTags, { shouldValidate: true });
+  };
 
   const onSubmit = async (values: z.infer<typeof filmSchema>) => {
     if (!session?.user) {
@@ -145,6 +155,7 @@ const UploadFilm = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
+        <BackButton />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -209,9 +220,17 @@ const UploadFilm = () => {
                     <FormItem><FormLabel>Filming Country</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger></FormControl><SelectContent>{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                   )} />
                 </div>
-                <FormField control={form.control} name="tags" render={({ field }) => (
-                  <FormItem><FormLabel>Tags (Optional)</FormLabel><FormControl><Input placeholder="Migration, Identity, Youth" {...field} /></FormControl><FormDescription>Separate tags with a comma.</FormDescription><FormMessage /></FormItem>
-                )} />
+                <div className="space-y-2">
+                  <FormField control={form.control} name="tags" render={({ field }) => (
+                    <FormItem><FormLabel>Tags (Optional)</FormLabel><FormControl><Input placeholder="Migration, Identity, Youth" {...field} /></FormControl><FormDescription>Separate tags with a comma.</FormDescription><FormMessage /></FormItem>
+                  )} />
+                  <AiKeywordGenerator
+                    title={title}
+                    description={description}
+                    currentTags={tags}
+                    onTagAdd={handleAddTag}
+                  />
+                </div>
                 <FormField control={form.control} name="trailer_url" render={({ field }) => (
                   <FormItem><FormLabel>Trailer URL (Optional)</FormLabel><FormControl><Input placeholder="https://youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -238,7 +257,7 @@ const UploadFilm = () => {
                     <FormItem className="flex flex-row items-start space-x-2 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm that I own the rights or have permission to submit this film.</FormLabel></div></FormItem>
                   )} />
                   <FormField control={form.control} name="confirm_terms" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-2 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the platform's <Button variant="link" type="button" className="p-0 h-auto">Terms of Service</Button>.</FormLabel></div></FormItem>
+                    <FormItem className="flex flex-row items-start space-x-2 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the platform's <Button variant="link" asChild type="button" className="p-0 h-auto"><Link to="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</Link></Button>.</FormLabel></div></FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={isUploading}>

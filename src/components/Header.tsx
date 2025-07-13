@@ -3,7 +3,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Film, Upload, User, LogOut, LayoutDashboard, Settings, Bell } from 'lucide-react';
+import { Menu, Film, Upload, User, LogOut, LayoutDashboard, Settings, Bell, Sparkles } from 'lucide-react';
 import { useSession } from '@/components/SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,7 +23,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    if (error && error.message !== 'Auth session missing!') {
       toast.error('Failed to log out: ' + error.message);
     } else {
       toast.success('Logged out successfully');
@@ -38,16 +38,23 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="mr-4 hidden md:flex">
           <Link to="/" className="mr-6 flex items-center space-x-2">
-            <Film className="h-6 w-6" />
+            <Film className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block">UniShorts</span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link to="/explore">Explore</Link>
-            <Link to="/upload">Submit Film</Link>
+          <nav className="flex items-center gap-6 text-sm font-medium">
+            <Link to="/explore" className="transition-colors hover:text-primary text-foreground/80">
+              Explore
+            </Link>
+            <Link to="/upload" className="transition-colors hover:text-primary text-foreground/80">
+              Submit Film
+            </Link>
+            <Link to="/idea-generator" className="transition-colors hover:text-primary text-foreground/80">
+              Idea Generator
+            </Link>
           </nav>
         </div>
 
@@ -61,12 +68,13 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left">
               <Link to="/" className="mr-6 flex items-center space-x-2 mb-6">
-                <Film className="h-6 w-6" />
+                <Film className="h-6 w-6 text-primary" />
                 <span className="font-bold">UniShorts</span>
               </Link>
               <nav className="grid gap-2 py-6">
                 <Link to="/explore" className="flex w-full items-center py-2 text-lg font-semibold">Explore</Link>
                 <Link to="/upload" className="flex w-full items-center py-2 text-lg font-semibold">Submit Film</Link>
+                <Link to="/idea-generator" className="flex w-full items-center py-2 text-lg font-semibold">Idea Generator</Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -102,24 +110,18 @@ export default function Header() {
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/notifications')}>
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span>Notifications</span>
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/upload')}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    <span>Submit Film</span>
+                  <DropdownMenuItem onClick={() => navigate('/idea-generator')}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    <span>Idea Generator</span>
                   </DropdownMenuItem>
-                  {profile?.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Admin Dashboard</span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />

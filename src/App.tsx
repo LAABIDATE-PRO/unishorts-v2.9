@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
 import Login from '@/pages/Login';
@@ -16,6 +17,7 @@ import Privacy from '@/pages/Privacy';
 import Notifications from '@/pages/Notifications';
 import PendingApproval from '@/pages/PendingApproval';
 import Rejected from '@/pages/Rejected';
+import FilmIdeaGenerator from '@/pages/FilmIdeaGenerator';
 
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminRoute from '@/components/admin/AdminRoute';
@@ -28,8 +30,24 @@ import AdminEmails from '@/pages/admin/Emails';
 import AdminInstitutions from '@/pages/admin/Institutions';
 import AdminRoles from '@/pages/admin/Roles';
 import AdminChoiceDialog from '@/components/AdminChoiceDialog';
+import { useAdBlockDetector } from './hooks/useAdBlockDetector';
+import AdBlockerDialog from './components/AdBlockerDialog';
+import CookieBanner from './components/CookieBanner';
 
 function App() {
+  const isAdBlockerDetected = useAdBlockDetector();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAdBlockerDetected) {
+      // Use a session storage item to only show the dialog once per session
+      if (!sessionStorage.getItem('adBlockerDialogShown')) {
+        setIsDialogOpen(true);
+        sessionStorage.setItem('adBlockerDialogShown', 'true');
+      }
+    }
+  }, [isAdBlockerDetected]);
+
   return (
     <>
       <Routes>
@@ -49,6 +67,7 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path="/rejected" element={<Rejected />} />
+        <Route path="/idea-generator" element={<FilmIdeaGenerator />} />
         
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
@@ -66,6 +85,8 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <AdminChoiceDialog />
+      <AdBlockerDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      <CookieBanner />
     </>
   );
 }

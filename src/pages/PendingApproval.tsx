@@ -4,12 +4,16 @@ import { Hourglass } from 'lucide-react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { showError } from '@/utils/toast';
 
 const PendingApproval = () => {
   const { profile } = useSession();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error && error.message !== 'Auth session missing!') {
+      showError('Failed to log out.');
+    }
   };
 
   return (

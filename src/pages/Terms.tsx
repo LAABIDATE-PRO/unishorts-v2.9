@@ -1,12 +1,14 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 
 const Terms = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto p-8">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-4">Terms of Service</h1>
         <div className="prose dark:prose-invert max-w-none">
           <p>Welcome to UniShorts!</p>

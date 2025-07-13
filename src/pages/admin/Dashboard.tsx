@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Film, Eye, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Film, Eye, Clock, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError } from '@/utils/toast';
+import StatCard from '@/components/admin/StatCard';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Stats {
   users: number;
@@ -12,6 +14,7 @@ interface Stats {
   inReview: number;
   rejected: number;
   totalViews: number;
+  recentFilms: { title: string; view_count: number }[];
 }
 
 const AdminDashboard = () => {
@@ -22,7 +25,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const { count: users } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
-        const { data: films, error: filmsError } = await supabase.from('films').select('status,view_count');
+        const { data: films, error: filmsError } = await supabase.from('films').select('status,view_count,title').order('created_at', { ascending: false });
         if (filmsError) throw filmsError;
 
         const totalFilms = films.length;
@@ -30,6 +33,7 @@ const AdminDashboard = () => {
         const inReview = films.filter(f => f.status === 'in_review').length;
         const rejected = films.filter(f => f.status === 'rejected').length;
         const totalViews = films.reduce((acc, f) => acc + (f.view_count || 0), 0);
+        const recentFilms = films.slice(0, 7).map(f => ({ title: f.title.substring(0, 15) + (f.title.length > 15 ? '...' : ''), view_count: f.view_count || 0 }));
 
         setStats({
           users: users || 0,
@@ -38,6 +42,7 @@ const AdminDashboard = () => {
           inReview,
           rejected,
           totalViews,
+          recentFilms,
         });
       } catch (error: any) {
         showError('Failed to load dashboard statistics.');
@@ -49,72 +54,96 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !stats) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i}><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-8 w-1/4" /></CardContent></Card>
-        ))}
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold"><Skeleton className="h-8 w-48" /></h1>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
+        </div>
+        <div className="grid gap-6 md:grid-cols-5">
+          <Skeleton className="md:col-span-3 h-80 rounded-lg" />
+          <Skeleton className="md:col-span-2 h-80 rounded-lg" />
+        </div>
       </div>
     );
   }
 
+  const filmStatusData = [
+    { name: 'Published', value: stats.published },
+    { name: 'In Review', value: stats.inReview },
+    { name: 'Rejected', value: stats.rejected },
+  ];
+
+  const COLORS = ['hsl(var(--secondary))', 'hsl(var(--primary))', 'hsl(var(--destructive))'];
+
   return (
     <>
-      <h1 className="text-3xl font-bold mb-6">Main Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total Views" value={stats.totalViews.toLocaleString()} icon={<Eye className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Total Users" value={stats.users.toLocaleString()} icon={<Users className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Total Films" value={stats.totalFilms.toLocaleString()} icon={<Film className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Films In Review" value={stats.inReview.toLocaleString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} />
+      </div>
+      <div className="grid gap-6 mt-6 md:grid-cols-5">
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Recent Film Performance
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.users.toLocaleString()}</div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.recentFilms} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <XAxis dataKey="title" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+                <Bar dataKey="view_count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Films</CardTitle>
-            <Film className="h-4 w-4 text-muted-foreground" />
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Film Status Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalFilms.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalViews.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Films In Review</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.inReview.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published Films</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.published.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected Films</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.rejected.toLocaleString()}</div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={filmStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={100}
+                  innerRadius={70}
+                  fill="#8884d8"
+                  dataKey="value"
+                  stroke="hsl(var(--card))"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {filmStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

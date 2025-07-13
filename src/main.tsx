@@ -7,6 +7,8 @@ import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import { SessionContextProvider } from "./components/SessionContextProvider.tsx";
 import { Toaster } from "@/components/ui/sonner";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { CookieConsentProvider } from "./components/CookieConsentProvider.tsx";
 
 const queryClient = new QueryClient();
 
@@ -15,10 +17,14 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SessionContextProvider>
-            <App />
-            <Toaster richColors />
-          </SessionContextProvider>
+          <ErrorBoundary>
+            <SessionContextProvider>
+              <CookieConsentProvider>
+                <App />
+                <Toaster richColors />
+              </CookieConsentProvider>
+            </SessionContextProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>

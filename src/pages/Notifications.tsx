@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
 import NotificationItem from '@/components/NotificationItem';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BackButton from '@/components/BackButton';
 
 const fetchNotifications = async (): Promise<NotificationType[]> => {
   const { data, error } = await supabase
@@ -77,12 +78,21 @@ const Notifications = () => {
     },
   });
 
-  const filteredNotifications = notifications.filter(n => filter === 'all' || n.type === filter);
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'all') {
+      return true;
+    }
+    if (filter === 'new_comment') {
+      return n.type === 'new_comment' || n.type === 'comment_reply';
+    }
+    return n.type === filter;
+  });
 
   return (
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
+        <BackButton />
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
             <div className="flex justify-between items-center">

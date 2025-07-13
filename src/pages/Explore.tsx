@@ -17,8 +17,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useSession } from '@/components/SessionContextProvider';
+import { Button } from '@/components/ui/button';
+import BackButton from '@/components/BackButton';
 
 const FILMS_PER_PAGE = 18;
+const genres = ["All", "Drama", "Documentary", "Comedy", "Horror", "Animation", "Experimental"];
 
 const generatePagination = (currentPage: number, totalPages: number) => {
   if (totalPages <= 7) {
@@ -42,6 +45,7 @@ const Explore = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get('q') || '';
   const currentPage = Number(searchParams.get('page') || '1');
+  const selectedGenre = searchParams.get('genre') || 'All';
 
   const totalPages = count ? Math.ceil(count / FILMS_PER_PAGE) : 0;
 
@@ -62,6 +66,10 @@ const Explore = () => {
     if (searchTerm) {
       query = query.ilike('title', `%${searchTerm}%`);
     }
+    
+    if (selectedGenre && selectedGenre !== 'All') {
+      query = query.eq('genre', selectedGenre);
+    }
 
     const { data, error, count } = await query;
 
@@ -73,7 +81,7 @@ const Explore = () => {
       setCount(count);
     }
     setIsLoading(false);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, selectedGenre]);
 
   useEffect(() => {
     fetchFilms();
@@ -91,6 +99,17 @@ const Explore = () => {
     setSearchParams(params);
   };
   
+  const handleGenreChange = (genre: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (genre === 'All') {
+      params.delete('genre');
+    } else {
+      params.set('genre', genre);
+    }
+    params.set('page', '1'); // Reset to first page on new genre selection
+    setSearchParams(params);
+  };
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', String(page));
@@ -104,7 +123,8 @@ const Explore = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <BackButton />
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h1 className="text-3xl font-bold">Explore Films</h1>
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -116,6 +136,19 @@ const Explore = () => {
               onChange={handleSearch}
             />
           </div>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {genres.map((genre) => (
+            <Button
+              key={genre}
+              variant={selectedGenre === genre ? 'default' : 'outline'}
+              onClick={() => handleGenreChange(genre)}
+              className="rounded-full px-4"
+            >
+              {genre}
+            </Button>
+          ))}
         </div>
 
         {isLoading ? (
@@ -170,7 +203,7 @@ const Explore = () => {
         ) : (
           <div className="text-center py-16 border rounded-lg">
             <h2 className="text-xl font-semibold">No films found</h2>
-            <p className="text-muted-foreground mt-2">Try adjusting your search or check back later.</p>
+            <p className="text-muted-foreground mt-2">Try adjusting your search or filters.</p>
           </div>
         )}
       </main>

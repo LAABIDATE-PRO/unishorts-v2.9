@@ -32,62 +32,48 @@ const RelatedFilmsSection: React.FC<RelatedFilmsSectionProps> = ({ currentFilm }
 
     const fetchRelatedFilms = async () => {
       setIsLoading(true);
-      const queries = [];
+      
+      const directorQuery = currentFilm.user_id ? supabase
+        .from('films')
+        .select('id, title, director_names, thumbnail_url')
+        .eq('user_id', currentFilm.user_id)
+        .eq('status', 'published')
+        .eq('visibility', 'public')
+        .neq('id', currentFilm.id)
+        .limit(10) : Promise.resolve({ data: [], error: null });
 
-      // Films by same director
-      if (currentFilm.user_id) {
-        queries.push(
-          supabase
-            .from('films')
-            .select('id, title, director_names, thumbnail_url')
-            .eq('user_id', currentFilm.user_id)
-            .eq('status', 'published')
-            .eq('visibility', 'public')
-            .neq('id', currentFilm.id) // Exclude current film
-            .limit(10)
-        );
-      }
+      const genreQuery = currentFilm.genre ? supabase
+        .from('films')
+        .select('id, title, director_names, thumbnail_url')
+        .eq('genre', currentFilm.genre)
+        .eq('status', 'published')
+        .eq('visibility', 'public')
+        .neq('id', currentFilm.id)
+        .limit(10) : Promise.resolve({ data: [], error: null });
 
-      // Films by same genre
-      if (currentFilm.genre) {
-        queries.push(
-          supabase
-            .from('films')
-            .select('id, title, director_names, thumbnail_url')
-            .eq('genre', currentFilm.genre)
-            .eq('status', 'published')
-            .eq('visibility', 'public')
-            .neq('id', currentFilm.id)
-            .limit(10)
-        );
-      }
-
-      // Films by same language
-      if (currentFilm.language) {
-        queries.push(
-          supabase
-            .from('films')
-            .select('id, title, director_names, thumbnail_url')
-            .eq('language', currentFilm.language)
-            .eq('status', 'published')
-            .eq('visibility', 'public')
-            .neq('id', currentFilm.id)
-            .limit(10)
-        );
-      }
+      const languageQuery = currentFilm.language ? supabase
+        .from('films')
+        .select('id, title, director_names, thumbnail_url')
+        .eq('language', currentFilm.language)
+        .eq('status', 'published')
+        .eq('visibility', 'public')
+        .neq('id', currentFilm.id)
+        .limit(10) : Promise.resolve({ data: [], error: null });
 
       try {
-        const results = await Promise.all(queries.map(q => q.then(res => res.data)));
-        
-        if (currentFilm.user_id) {
-          setFilmsBySameDirector(results[0]?.map(mapToCarouselFilm) || []);
-        }
-        if (currentFilm.genre) {
-          setFilmsBySameGenre(results[currentFilm.user_id ? 1 : 0]?.map(mapToCarouselFilm) || []);
-        }
-        if (currentFilm.language) {
-          setFilmsBySameLanguage(results[currentFilm.user_id && currentFilm.genre ? 2 : (currentFilm.user_id || currentFilm.genre ? 1 : 0)]?.map(mapToCarouselFilm) || []);
-        }
+        const [directorResults, genreResults, languageResults] = await Promise.all([
+          directorQuery,
+          genreQuery,
+          languageQuery
+        ]);
+
+        if (directorResults.error) console.error('Director films error:', directorResults.error);
+        if (genreResults.error) console.error('Genre films error:', genreResults.error);
+        if (languageResults.error) console.error('Language films error:', languageResults.error);
+
+        setFilmsBySameDirector(directorResults.data?.map(mapToCarouselFilm) || []);
+        setFilmsBySameGenre(genreResults.data?.map(mapToCarouselFilm) || []);
+        setFilmsBySameLanguage(languageResults.data?.map(mapToCarouselFilm) || []);
 
       } catch (error) {
         showError('Failed to load related films.');

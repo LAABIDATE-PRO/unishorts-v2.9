@@ -9,6 +9,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FilmCard } from '@/components/FilmCard';
 import { Profile as ProfileType, Film as FilmType } from '@/types';
+import BackButton from '@/components/BackButton';
 
 const Profile = () => {
   const { username } = useParams<{ username: string }>();
@@ -113,6 +114,7 @@ const Profile = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
+        <BackButton />
         <div className="flex flex-col items-center text-center gap-4 mb-8">
           <Avatar className="h-32 w-32 border-4 border-primary">
             <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />

@@ -1,12 +1,14 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 
 const Privacy = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto p-8">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-4">Privacy Policy</h1>
         <div className="prose dark:prose-invert max-w-none">
           <p>Your privacy is important to us. It is UniShorts's policy to respect your privacy regarding any information we may collect from you across our website.</p>

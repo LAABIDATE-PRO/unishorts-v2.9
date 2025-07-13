@@ -22,6 +22,8 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import BackButton from '@/components/BackButton';
+import AiKeywordGenerator from '@/components/AiKeywordGenerator';
 
 const countries = ["Saudi Arabia", "United Arab Emirates", "Egypt", "Morocco", "USA", "UK"];
 const genres = ["Drama", "Documentary", "Comedy", "Horror", "Animation", "Experimental"];
@@ -61,6 +63,16 @@ const EditFilm = () => {
   const form = useForm<z.infer<typeof editFilmSchema>>({
     resolver: zodResolver(editFilmSchema),
   });
+
+  const title = form.watch('title');
+  const description = form.watch('description');
+  const tags = form.watch('tags') || '';
+
+  const handleAddTag = (tag: string) => {
+    const currentTags = form.getValues('tags') || '';
+    const newTags = currentTags ? `${currentTags}, ${tag}` : tag;
+    form.setValue('tags', newTags, { shouldValidate: true });
+  };
 
   useEffect(() => {
     const fetchFilm = async () => {
@@ -139,6 +151,7 @@ const EditFilm = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
+        <BackButton />
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Edit Film: {film.title}</CardTitle>
@@ -185,9 +198,17 @@ const EditFilm = () => {
                     <FormItem><FormLabel>Filming Country</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger></FormControl><SelectContent>{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                   )} />
                 </div>
-                <FormField control={form.control} name="tags" render={({ field }) => (
-                  <FormItem><FormLabel>Tags (Optional)</FormLabel><FormControl><Input placeholder="Migration, Identity, Youth" {...field} /></FormControl><FormDescription>Separate tags with a comma.</FormDescription><FormMessage /></FormItem>
-                )} />
+                 <div className="space-y-2">
+                  <FormField control={form.control} name="tags" render={({ field }) => (
+                    <FormItem><FormLabel>Tags (Optional)</FormLabel><FormControl><Input placeholder="Migration, Identity, Youth" {...field} value={field.value || ''} /></FormControl><FormDescription>Separate tags with a comma.</FormDescription><FormMessage /></FormItem>
+                  )} />
+                  <AiKeywordGenerator
+                    title={title}
+                    description={description}
+                    currentTags={tags}
+                    onTagAdd={handleAddTag}
+                  />
+                </div>
                 <FormField control={form.control} name="trailer_url" render={({ field }) => (
                   <FormItem><FormLabel>Trailer URL (Optional)</FormLabel><FormControl><Input placeholder="https://youtube.com/watch?v=..." {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
