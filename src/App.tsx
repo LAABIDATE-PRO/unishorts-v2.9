@@ -18,6 +18,7 @@ import Notifications from '@/pages/Notifications';
 import PendingApproval from '@/pages/PendingApproval';
 import Rejected from '@/pages/Rejected';
 import FilmIdeaGenerator from '@/pages/FilmIdeaGenerator';
+import VerifyEmail from '@/pages/VerifyEmail';
 
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminRoute from '@/components/admin/AdminRoute';
@@ -68,6 +69,7 @@ function App() {
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path="/rejected" element={<Rejected />} />
         <Route path="/idea-generator" element={<FilmIdeaGenerator />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>

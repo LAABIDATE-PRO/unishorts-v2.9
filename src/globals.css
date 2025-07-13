@@ -63,3 +63,16 @@
     @apply font-heading;
   }
 }
+
+/* Custom styles for react-phone-number-input */
+.phone-number-input .PhoneInputInput {
+  @apply h-auto p-0 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0;
+}
+
+.phone-number-input .PhoneInputCountry {
+  @apply pr-2;
+}
+
+.phone-number-input {
+  @apply flex h-10 w-full items-center rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2;
+}

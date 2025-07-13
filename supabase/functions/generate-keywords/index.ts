@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 // v1.2 - Force redeploy to load secrets

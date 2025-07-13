@@ -54,30 +54,11 @@ const Login = () => {
               },
             },
           }}
-          localization={{
-            variables: {
-              sign_in: {
-                email_label: 'Email address',
-                password_label: 'Password',
-                email_input_placeholder: 'Your email address',
-                password_input_placeholder: 'Your password',
-                button_label: 'Sign In',
-                link_text: 'Forgot your password?',
-              },
-              forgotten_password: {
-                email_label: 'Email address',
-                email_input_placeholder: 'your@email.com',
-                button_label: 'Send reset instructions',
-                link_text: 'Back to Sign In',
-                confirmation_text: 'A password reset link has been sent to your email address.',
-              },
-            },
-          }}
         />
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{' '}
+          Don't have an account?{' '}
           <Button variant="link" asChild className="p-0 h-auto font-semibold">
-            <Link to="/register">Sign up</Link>
+            <Link to="/register">Sign Up</Link>
           </Button>
         </div>
       </div>

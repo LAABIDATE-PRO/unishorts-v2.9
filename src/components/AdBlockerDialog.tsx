@@ -22,15 +22,15 @@ const AdBlockerDialog = ({ isOpen, onClose }: AdBlockerDialogProps) => {
           <div className="flex justify-center mb-4">
             <ShieldAlert className="h-16 w-16 text-destructive" />
           </div>
-          <AlertDialogTitle className="text-center text-2xl">تم اكتشاف أداة لحظر الإعلانات</AlertDialogTitle>
+          <AlertDialogTitle className="text-center text-2xl">Ad Blocker Detected</AlertDialogTitle>
           <AlertDialogDescription className="text-center">
-            يبدو أنك تستخدم أداة لحظر الإعلانات. نحن نعتمد على الإعلانات لدعم المنصة وتقديم المحتوى مجانًا.
+            It looks like you're using an ad blocker. We rely on ads to support the platform and provide content for free.
             <br /><br />
-            <strong>الرجاء التفكير في تعطيل مانع الإعلانات الخاص بك على موقعنا.</strong>
+            <strong>Please consider disabling your ad blocker on our site.</strong>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={onClose} className="w-full">لقد فهمت</AlertDialogAction>
+          <AlertDialogAction onClick={onClose} className="w-full">I understand</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

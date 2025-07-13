@@ -10,7 +10,7 @@ export type Profile = {
   institution_name: string | null;
   phone_number: string | null;
   role: 'user' | 'admin' | 'moderator' | 'reviewer';
-  account_status?: 'active' | 'disabled' | 'banned' | 'pending' | 'rejected';
+  account_status?: 'active' | 'disabled' | 'banned' | 'pending_email_verification' | 'pending_admin_approval' | 'rejected';
 };
 
 export type Film = {
@@ -65,7 +65,9 @@ export type NotificationType =
   | 'comment_reply'
   | 'new_submission'
   | 'milestone'
-  | 'platform_update';
+  | 'platform_update'
+  | 'account_approved'
+  | 'account_rejected';
 
 export type Notification = {
   id: string;
@@ -113,7 +115,7 @@ export type AdminUser = {
   university_email: string | null;
   institution_name: string | null;
   role: string | null;
-  account_status: 'active' | 'disabled' | 'banned' | 'pending' | 'rejected' | null;
+  account_status: 'active' | 'disabled' | 'banned' | 'pending_email_verification' | 'pending_admin_approval' | 'rejected' | null;
   last_sign_in_at: string | null;
   avatar_url: string | null;
   film_count: number | null;

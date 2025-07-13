@@ -4,7 +4,7 @@ import { Notification } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { CheckCircle2, XCircle, MessageSquare, Reply, FileUp, Award, Megaphone, MoreHorizontal, Trash2, Check } from 'lucide-react';
+import { CheckCircle2, XCircle, MessageSquare, Reply, FileUp, Award, Megaphone, MoreHorizontal, Trash2, Check, UserCheck, UserX } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface NotificationItemProps {
@@ -21,6 +21,8 @@ const notificationIcons: { [key in Notification['type']]: ReactNode } = {
   new_submission: <FileUp className="h-5 w-5 text-orange-500" />,
   milestone: <Award className="h-5 w-5 text-yellow-500" />,
   platform_update: <Megaphone className="h-5 w-5 text-indigo-500" />,
+  account_approved: <UserCheck className="h-5 w-5 text-green-500" />,
+  account_rejected: <UserX className="h-5 w-5 text-red-500" />,
 };
 
 const NotificationItem = ({ notification, onMarkAsRead, onDelete }: NotificationItemProps) => {

@@ -32,7 +32,7 @@ const isProtectedRoute = (pathname: string) => {
 };
 
 const publicOnlyRoutes = ['/login', '/register'];
-const specialAccessRoutes = ['/pending-approval', '/rejected'];
+const specialAccessRoutes = ['/pending-approval', '/rejected', '/verify-email'];
 
 export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -48,19 +48,18 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
-      setIsLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-
+      
       if (event === 'SIGNED_IN') {
         showSuccess('Successfully logged in!');
       }
       
       if (event === 'SIGNED_OUT') {
+        setProfile(null);
         setShowAdminChoice(false);
         navigate('/login');
       }
@@ -73,23 +72,49 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
 
   useEffect(() => {
     if (user) {
+      setIsLoading(true);
       supabase.from('profiles').select('*').eq('id', user.id).single()
         .then(({ data }) => {
           setProfile(data || null);
+          setIsLoading(false);
         });
     } else {
       setProfile(null);
+      setIsLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`profile-changes:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          setProfile(payload.new as Profile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  useEffect(() => {
     if (isLoading) {
-      return; // Wait until session and profile loading is complete
+      return;
     }
 
     const currentPath = location.pathname;
 
-    // If no session, redirect protected routes to login
     if (!session) {
       if (isProtectedRoute(currentPath)) {
         navigate(`/login?redirectTo=${currentPath}`, { replace: true });
@@ -97,13 +122,17 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       return;
     }
 
-    // If session exists, check for profile and apply routing logic
     if (profile) {
       const status = profile.account_status;
       const params = new URLSearchParams(location.search);
       const redirectTo = params.get('redirectTo');
 
-      if (status === 'pending' && currentPath !== '/pending-approval') {
+      if (status === 'pending_email_verification' && currentPath !== '/verify-email') {
+        navigate('/verify-email', { replace: true });
+        return;
+      }
+
+      if (status === 'pending_admin_approval' && currentPath !== '/pending-approval') {
         navigate('/pending-approval', { replace: true });
         return;
       }
@@ -114,12 +143,10 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       }
 
       if (status === 'active') {
-        // If user is active but on a special page, redirect them away
         if (specialAccessRoutes.includes(currentPath)) {
           navigate('/', { replace: true });
           return;
         }
-        // If user is on a public-only page (login/register), redirect them
         if (publicOnlyRoutes.includes(currentPath)) {
           if (profile.role === 'admin' || profile.role === 'moderator') {
             setShowAdminChoice(true);
@@ -127,6 +154,10 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
           navigate(redirectTo || '/', { replace: true });
         }
       }
+    } else if (user && !isLoading) {
+        if (currentPath !== '/verify-email') {
+            navigate('/verify-email', { replace: true });
+        }
     }
   }, [session, profile, isLoading, location, navigate]);
 

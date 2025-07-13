@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, User, Trash2, Shield, UserCheck, UserX, Search, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, User, Trash2, Shield, UserCheck, UserX, Search, CheckCircle, XCircle, MailCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
 import { Input } from '@/components/ui/input';
@@ -79,23 +79,44 @@ const AdminUsers = () => {
   });
 
   const handleApprove = (user: AdminUser) => {
-    updateUserProfile.mutate({ id: user.id, data: { account_status: 'active' } });
-    showSuccess(`User ${user.email} has been approved.`);
-    logEvent('ADMIN_USER_APPROVED', { 
-        targetUserId: user.id, 
-        targetUserEmail: user.email, 
-        message: `User account for ${user.email} was approved.`
+    updateUserProfile.mutate({ id: user.id, data: { account_status: 'active' } }, {
+      onSuccess: async () => {
+        showSuccess(`User ${user.email} has been approved.`);
+        logEvent('ADMIN_USER_APPROVED', { 
+            targetUserId: user.id, 
+            targetUserEmail: user.email, 
+            message: `User account for ${user.email} was approved.`
+        });
+        await supabase.from('notifications').insert({
+            user_id: user.id,
+            type: 'account_approved',
+            message: 'Congratulations! Your account has been approved. You can now access all of UniShorts.',
+            url: '/dashboard',
+            related_entity_id: user.id
+        });
+      }
     });
   };
 
   const handleReject = (user: AdminUser, reason: string) => {
-    updateUserProfile.mutate({ id: user.id, data: { account_status: 'rejected' } });
-    showSuccess(`User ${user.email} has been rejected.`);
-    logEvent('ADMIN_USER_REJECTED', { 
-        targetUserId: user.id, 
-        targetUserEmail: user.email, 
-        reason: reason,
-        message: `User account for ${user.email} was rejected.`
+    updateUserProfile.mutate({ id: user.id, data: { account_status: 'rejected' } }, {
+      onSuccess: async () => {
+        showSuccess(`User ${user.email} has been rejected.`);
+        logEvent('ADMIN_USER_REJECTED', { 
+            targetUserId: user.id, 
+            targetUserEmail: user.email, 
+            reason: reason,
+            message: `User account for ${user.email} was rejected.`
+        });
+        await supabase.from('notifications').insert({
+            user_id: user.id,
+            type: 'account_rejected',
+            message: `Your account was not approved. Reason: ${reason}`,
+            url: '/rejected',
+            related_entity_id: user.id
+        });
+        setIsRejecting(null);
+      }
     });
   };
 
@@ -141,7 +162,8 @@ const AdminUsers = () => {
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'active': return <Badge variant="outline" className="border-green-500 text-green-500">Active</Badge>;
-      case 'pending': return <Badge variant="secondary">Pending</Badge>;
+      case 'pending_admin_approval': return <Badge variant="secondary">Pending Approval</Badge>;
+      case 'pending_email_verification': return <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pending Email</Badge>;
       case 'disabled': return <Badge variant="destructive">Disabled</Badge>;
       case 'rejected': return <Badge variant="destructive">Rejected</Badge>;
       default: return <Badge>{status}</Badge>;
@@ -209,7 +231,7 @@ const AdminUsers = () => {
                         <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          {user.account_status === 'pending' && (
+                          {user.account_status === 'pending_admin_approval' && (
                             <>
                               <DropdownMenuItem onClick={() => handleApprove(user)}>
                                 <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
@@ -271,7 +293,6 @@ const AdminUsers = () => {
           onClose={() => setIsRejecting(null)}
           onConfirm={(reason) => {
             handleReject(isRejecting, reason);
-            setIsRejecting(null);
           }}
         />
       )}
