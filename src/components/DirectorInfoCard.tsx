@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile as ProfileType } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,7 +10,7 @@ interface DirectorInfoCardProps {
   userId: string;
 }
 
-const DirectorInfoCard: React.FC<DirectorInfoCardProps> = ({ userId }) => {
+const DirectorInfoCard = ({ userId }: DirectorInfoCardProps) => {
   const [directorProfile, setDirectorProfile] = useState<ProfileType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -34,7 +34,7 @@ const InstitutionDialog: React.FC<InstitutionDialogProps> = ({ institution, isOp
   const form = useForm<z.infer<typeof institutionSchema>>({
     resolver: zodResolver(institutionSchema),
   });
-  const [domainInput, setDomainInput] = React.useState('');
+  const [domainInput, setDomainInput] = useState('');
 
   useEffect(() => {
     if (institution) {

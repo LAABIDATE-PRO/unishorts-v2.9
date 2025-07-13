@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,7 @@ interface AdBlockerDialogProps {
   onClose: () => void;
 }
 
-const AdBlockerDialog: React.FC<AdBlockerDialogProps> = ({ isOpen, onClose }) => {
+const AdBlockerDialog = ({ isOpen, onClose }: AdBlockerDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>

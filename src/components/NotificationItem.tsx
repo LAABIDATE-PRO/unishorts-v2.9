@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Notification } from '@/types';
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ interface NotificationItemProps {
   onDelete: () => void;
 }
 
-const notificationIcons: { [key in Notification['type']]: React.ReactNode } = {
+const notificationIcons: { [key in Notification['type']]: ReactNode } = {
   film_approved: <CheckCircle2 className="h-5 w-5 text-green-500" />,
   film_rejected: <XCircle className="h-5 w-5 text-red-500" />,
   new_comment: <MessageSquare className="h-5 w-5 text-blue-500" />,
@@ -23,7 +23,7 @@ const notificationIcons: { [key in Notification['type']]: React.ReactNode } = {
   platform_update: <Megaphone className="h-5 w-5 text-indigo-500" />,
 };
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead, onDelete }) => {
+const NotificationItem = ({ notification, onMarkAsRead, onDelete }: NotificationItemProps) => {
   const icon = notificationIcons[notification.type] || <div className="h-5 w-5" />;
 
   const content = (

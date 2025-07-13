@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ interface UserDetailDialogProps {
   onClose: () => void;
 }
 
-const UserDetailDialog: React.FC<UserDetailDialogProps> = ({ user, onClose }) => {
+const UserDetailDialog = ({ user, onClose }: UserDetailDialogProps) => {
   const [userFilms, setUserFilms] = useState<Film[]>([]);
   const [isLoadingFilms, setIsLoadingFilms] = useState(true);
   const { session } = useSession();

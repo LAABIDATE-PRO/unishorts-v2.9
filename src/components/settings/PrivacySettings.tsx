@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import CookieSettingsManager from '@/components/CookieSettingsManager';
 import { Button } from '@/components/ui/button';

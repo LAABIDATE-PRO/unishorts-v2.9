@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import {
@@ -14,7 +13,7 @@ interface ShareButtonProps {
   film: Film;
 }
 
-const ShareButton: React.FC<ShareButtonProps> = ({ film }) => {
+const ShareButton = ({ film }: ShareButtonProps) => {
   const handleShare = async (platform: string) => {
     const filmUrl = window.location.href;
     let shareUrl = '';

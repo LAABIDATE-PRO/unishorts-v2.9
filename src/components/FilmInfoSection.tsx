@@ -1,4 +1,3 @@
-import React from 'react';
 import { Film } from '@/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -6,7 +5,7 @@ interface FilmInfoSectionProps {
   film: Film;
 }
 
-const FilmInfoSection: React.FC<FilmInfoSectionProps> = ({ film }) => {
+const FilmInfoSection = ({ film }: FilmInfoSectionProps) => {
   return (
     <div className="md:col-span-2">
       <h2 className="text-2xl font-semibold mb-2">Description</h2>

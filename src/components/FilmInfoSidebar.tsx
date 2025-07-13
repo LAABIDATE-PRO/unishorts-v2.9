@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { Clock, Calendar, Tag, Languages, MapPin } from 'lucide-react';
 
 interface FilmInfoProps {
@@ -9,7 +9,7 @@ interface FilmInfoProps {
   country?: string;
 }
 
-const InfoItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | number }) => {
+const InfoItem = ({ icon, label, value }: { icon: ReactNode, label: string, value?: string | number }) => {
   if (!value) return null;
   return (
     <div className="flex items-start space-x-3">

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ interface LoginPromptProps {
   message: string;
 }
 
-const LoginPrompt: React.FC<LoginPromptProps> = ({ message }) => {
+const LoginPrompt = ({ message }: LoginPromptProps) => {
   const location = useLocation();
 
   return (

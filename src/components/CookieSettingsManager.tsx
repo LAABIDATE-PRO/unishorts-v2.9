@@ -1,4 +1,3 @@
-import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CookiePreferences } from './CookieConsentProvider';
@@ -8,7 +7,7 @@ interface CookieSettingsManagerProps {
   onPreferencesChange: (newPreferences: CookiePreferences) => void;
 }
 
-const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({ preferences, onPreferencesChange }) => {
+const CookieSettingsManager = ({ preferences, onPreferencesChange }: CookieSettingsManagerProps) => {
   const handleToggle = (category: keyof CookiePreferences) => {
     onPreferencesChange({
       ...preferences,

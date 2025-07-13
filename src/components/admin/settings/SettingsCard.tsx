@@ -1,12 +1,12 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import { ReactNode, FormEvent } from "react";
 
 interface SettingsCardProps {
   title: string;
   description: string;
-  children: React.ReactNode;
-  onSave: (event: React.FormEvent) => Promise<void>;
+  children: ReactNode;
+  onSave: (event: FormEvent) => Promise<void>;
   isSaving: boolean;
 }
 

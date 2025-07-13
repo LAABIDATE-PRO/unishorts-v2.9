@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ interface CookieSettingsModalProps {
   onClose: () => void;
 }
 
-const CookieSettingsModal: React.FC<CookieSettingsModalProps> = ({ isOpen, onClose }) => {
+const CookieSettingsModal = ({ isOpen, onClose }: CookieSettingsModalProps) => {
   const { preferences: initialPreferences, savePreferences } = useCookieConsent();
   const [currentPreferences, setCurrentPreferences] = useState<CookiePreferences>(initialPreferences);
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSession } from './SessionContextProvider';
 import { Lock } from 'lucide-react';
@@ -7,7 +6,7 @@ interface FilmPosterCardProps {
   film: { id: string; title: string; director: string; thumbnailUrl: string };
 }
 
-const FilmPosterCard: React.FC<FilmPosterCardProps> = ({ film }) => {
+const FilmPosterCard = ({ film }: FilmPosterCardProps) => {
   const { session } = useSession();
 
   return (

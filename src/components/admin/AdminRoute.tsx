@@ -1,9 +1,8 @@
-import React from 'react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const AdminRoute: React.FC = () => {
+const AdminRoute = () => {
   const { profile, isLoading } = useSession();
 
   if (isLoading) {

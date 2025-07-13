@@ -1,4 +1,3 @@
-import React from 'react';
 import Header from '@/components/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MyFilms from '@/components/dashboard/MyFilms';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Film } from '@/types';
 import FilmCarousel from './FilmCarousel';
@@ -16,7 +16,7 @@ type CarouselFilm = {
   thumbnailUrl: string;
 };
 
-const RelatedFilmsSection: React.FC<RelatedFilmsSectionProps> = ({ currentFilm }) => {
+const RelatedFilmsSection = ({ currentFilm }: RelatedFilmsSectionProps) => {
   const [filmsBySameDirector, setFilmsBySameDirector] = useState<CarouselFilm[]>([]);
   const [filmsBySameGenre, setFilmsBySameGenre] = useState<CarouselFilm[]>([]);
   const [filmsBySameLanguage, setFilmsBySameLanguage] = useState<CarouselFilm[]>([]);

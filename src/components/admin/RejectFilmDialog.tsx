@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ interface RejectFilmDialogProps {
   onConfirm: (reason: string) => void;
 }
 
-const RejectFilmDialog: React.FC<RejectFilmDialogProps> = ({ film, onClose, onConfirm }) => {
+const RejectFilmDialog = ({ film, onClose, onConfirm }: RejectFilmDialogProps) => {
   const [reason, setReason] = useState('');
 
   return (

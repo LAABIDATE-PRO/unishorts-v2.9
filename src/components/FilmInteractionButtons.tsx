@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, ThumbsUp, ThumbsDown, Eye } from 'lucide-react';
+import { Share2, ThumbsUp, Eye } from 'lucide-react';
 import { useSession } from './SessionContextProvider';
 import { showError, showSuccess } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +22,7 @@ interface FilmInteractionButtonsProps {
   isLiked: boolean;
 }
 
-const FilmInteractionButtons: React.FC<FilmInteractionButtonsProps> = ({ film, onLikeToggle, likesCount, isLiked }) => {
+const FilmInteractionButtons = ({ film, onLikeToggle, likesCount, isLiked }: FilmInteractionButtonsProps) => {
   const { session } = useSession();
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [isCurrentlyLiked, setIsCurrentlyLiked] = useState(isLiked);

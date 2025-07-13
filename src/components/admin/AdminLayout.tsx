@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Home, Film, Users, LogOut, Shield, Settings, FileText, Mail, Building2, ShieldCheck } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -7,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import BackButton from '../BackButton';
 
-const AdminLayout: React.FC = () => {
+const AdminLayout = () => {
   const { profile } = useSession();
 
   const handleSignOut = async () => {

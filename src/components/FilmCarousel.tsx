@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Carousel,
   CarouselContent,
@@ -13,7 +12,7 @@ interface FilmCarouselProps {
   films: { id: string; title: string; director: string; thumbnailUrl: string }[];
 }
 
-const FilmCarousel: React.FC<FilmCarouselProps> = ({ title, films }) => {
+const FilmCarousel = ({ title, films }: FilmCarouselProps) => {
   return (
     <section className="space-y-6">
       <h2 className="text-2xl md:text-3xl font-medium">{title}</h2>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Film } from '@/types';
 import FilmInfoSidebar from './FilmInfoSidebar';
 import DirectorCard from './DirectorCard';
@@ -15,7 +14,7 @@ interface FilmDescriptionTabProps {
   film: FilmWithProfile;
 }
 
-const FilmDescriptionTab: React.FC<FilmDescriptionTabProps> = ({ film }) => {
+const FilmDescriptionTab = ({ film }: FilmDescriptionTabProps) => {
   const directorName = film.first_name && film.last_name ? `${film.first_name} ${film.last_name}` : (film.director_names || 'Unknown Director');
 
   return (
