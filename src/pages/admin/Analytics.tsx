@@ -47,11 +47,14 @@ const fetchOverview = async (): Promise<AnalyticsOverview> => {
   const { data, error } = await supabase.rpc('get_analytics_overview').single();
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Analytics overview data not found.');
+  
+  const typedData = data as AnalyticsOverview;
+
   return {
-    total_views: data.total_views ?? 0,
-    unique_visitors: data.unique_visitors ?? 0,
-    total_films: data.total_films ?? 0,
-    total_users: data.total_users ?? 0,
+    total_views: typedData.total_views ?? 0,
+    unique_visitors: typedData.unique_visitors ?? 0,
+    total_films: typedData.total_films ?? 0,
+    total_users: typedData.total_users ?? 0,
   };
 };
 
@@ -150,7 +153,7 @@ const AdminAnalytics = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={deviceBreakdown} dataKey="views" nameKey="device_type" cx="50%" cy="50%" outerRadius={100} label>
-                    {deviceBreakdown?.map((entry, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
+                    {deviceBreakdown?.map((_, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }} />
                 </PieChart>

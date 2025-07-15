@@ -37,7 +37,7 @@ import { useSession } from './components/SessionContextProvider';
 import WelcomeDialog from './components/WelcomeDialog';
 
 function AuthStateRouter() {
-  const { session, profile, isLoading } = useSession();
+  const { session, isLoading } = useSession();
   const location = useLocation();
 
   useEffect(() => {

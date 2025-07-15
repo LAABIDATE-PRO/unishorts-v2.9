@@ -7,7 +7,6 @@ import { showError, showSuccess } from '@/utils/toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import InstitutionDialog from '@/components/admin/InstitutionDialog';
-import * as z from 'zod';
 
 const AdminInstitutions = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -33,7 +32,7 @@ const AdminInstitutions = () => {
 
   const handleSave = async (values: { name: string; approved_domains?: string[] }, id?: string) => {
     setIsSaving(true);
-    const { data, error } = id
+    const { error } = id
       ? await supabase.from('institutions').update(values).eq('id', id).select().single()
       : await supabase.from('institutions').insert(values).select().single();
 
