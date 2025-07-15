@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Film } from '@/types';
 import { Link } from 'react-router-dom';
 import { AspectRatio } from './ui/aspect-ratio';
 import { Button } from './ui/button';
 import { Lock } from 'lucide-react';
-import Plyr from 'plyr-react';
+import Plyr, { APITypes } from 'plyr-react';
 import 'plyr-react/plyr.css';
-import { APITypes } from 'plyr-react';
 import { useSession } from './SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,13 +16,13 @@ interface FilmVideoPlayerProps {
 }
 
 const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => {
-  const ref = useRef<APITypes>(null);
-  const [hasLoggedView, setHasLoggedView] = useState(false);
   const { session } = useSession();
+  const hasLoggedViewRef = useRef(false);
+  const ref = useRef<APITypes>(null);
 
-  const logView = async (durationWatched: number, watchPercentage: number) => {
-    if (hasLoggedView) return;
-    setHasLoggedView(true); // Prevent multiple logs for the same session
+  const logView = useCallback(async (durationWatched: number, watchPercentage: number) => {
+    if (hasLoggedViewRef.current) return;
+    hasLoggedViewRef.current = true;
 
     let anonymousId = null;
     if (!session?.user) {
@@ -46,15 +45,20 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => 
       });
     } catch (error) {
       console.error('Failed to log film view:', error);
-      // Don't show error to user, just log it.
-      // Revert state to allow another attempt if needed.
-      setHasLoggedView(false);
+      hasLoggedViewRef.current = false; // Allow retry if failed
     }
-  };
+  }, [session, film.id]);
 
   const handleTimeUpdate = () => {
-    if (!ref.current?.plyr || hasLoggedView) return;
-    const player = ref.current.plyr;
+    if (hasLoggedViewRef.current) {
+      return;
+    }
+    
+    const player = ref.current?.plyr;
+    if (!player) {
+      return;
+    }
+    
     const currentTime = player.currentTime;
     const duration = player.duration;
 
@@ -65,19 +69,6 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => 
       }
     }
   };
-  
-  useEffect(() => {
-    const player = ref.current?.plyr;
-    if (player) {
-      player.on('timeupdate', handleTimeUpdate);
-    }
-    return () => {
-      if (player) {
-        player.off('timeupdate', handleTimeUpdate);
-      }
-    };
-  }, [ref, hasLoggedView]);
-
 
   const videoSrc = {
     type: 'video',
@@ -93,7 +84,7 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => 
       kind: 'subtitles',
       label: lang.toUpperCase(),
       srcLang: lang,
-      src: `/path/to/subtitles/${film.id}_${lang}.vtt`, // This path is a placeholder
+      src: `/path/to/subtitles/${film.id}_${lang}.vtt`,
       default: lang === 'en',
     })) || [],
   };
@@ -135,12 +126,12 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => 
             options={{
               controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
               settings: ['captions', 'quality', 'speed', 'loop'],
-              // Quality selection is for UI purposes, as only one source is provided.
               quality: {
                 default: 720,
                 options: [1080, 720, 480],
               },
             }}
+            onTimeUpdate={handleTimeUpdate}
           />
         )}
       </AspectRatio>
