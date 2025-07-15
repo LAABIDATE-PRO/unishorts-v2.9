@@ -16,7 +16,7 @@ const Login = () => {
           supabaseClient={supabase}
           providers={[]}
           view="sign_in"
-          showLinks={true}
+          showLinks={false}
           appearance={{
             variables: {
               default: {
@@ -55,6 +55,11 @@ const Login = () => {
             },
           }}
         />
+        <div className="text-sm text-right">
+          <Button variant="link" asChild className="p-0 h-auto font-semibold">
+            <Link to="/forgot-password">Forgot your password?</Link>
+          </Button>
+        </div>
         <div className="mt-4 text-center text-sm">
           Don't have an account?{' '}
           <Button variant="link" asChild className="p-0 h-auto font-semibold">

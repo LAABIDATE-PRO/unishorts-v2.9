@@ -8,7 +8,6 @@ import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import { SessionContextProvider } from "./components/SessionContextProvider.tsx";
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { CookieConsentProvider } from "./components/CookieConsentProvider.tsx";
 
 const queryClient = new QueryClient();
 
@@ -19,10 +18,8 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <ErrorBoundary>
             <SessionContextProvider>
-              <CookieConsentProvider>
-                <App />
-                <Toaster richColors />
-              </CookieConsentProvider>
+              <App />
+              <Toaster richColors />
             </SessionContextProvider>
           </ErrorBoundary>
         </ThemeProvider>

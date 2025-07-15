@@ -20,13 +20,13 @@ const PendingApproval = () => {
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <Hourglass className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="mt-4 text-2xl font-bold">Thank you for verifying your email!</CardTitle>
+          <CardTitle className="mt-4 text-2xl font-bold">Thanks for Registering!</CardTitle>
           <CardDescription>
-            Your account is now awaiting admin approval, {profile?.first_name}. You’ll receive an email once it has been reviewed.
+            Hi {profile?.first_name}, your account is currently under review by our team. You will receive an email once your account is approved.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">You will be redirected automatically upon approval.</p>
+          <p className="text-sm text-muted-foreground">You will be automatically redirected once your account is approved.</p>
           <Button variant="outline" onClick={handleLogout}>
             Log Out
           </Button>

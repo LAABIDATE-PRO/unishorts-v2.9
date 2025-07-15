@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Home, Film, Users, LogOut, Shield, Settings, FileText, Mail, Building2, ShieldCheck } from 'lucide-react';
+import { Home, LogOut, Shield, Settings, FileText, SlidersHorizontal, ExternalLink, BarChart2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useSession } from '../SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,39 +35,31 @@ const AdminLayout = () => {
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+              <NavLink to="/" className={navLinkClasses}>
+                <ExternalLink className="h-4 w-4" />
+                View Site
+              </NavLink>
               <NavLink to="/admin" end className={navLinkClasses}>
                 <Home className="h-4 w-4" />
                 Dashboard
               </NavLink>
-              <NavLink to="/admin/films" className={navLinkClasses}>
-                <Film className="h-4 w-4" />
-                Films
+              <NavLink to="/admin/management" className={navLinkClasses}>
+                <SlidersHorizontal className="h-4 w-4" />
+                Management
+              </NavLink>
+              <NavLink to="/admin/analytics" className={navLinkClasses}>
+                <BarChart2 className="h-4 w-4" />
+                Analytics
               </NavLink>
               {profile?.role === 'admin' && (
                 <>
-                  <NavLink to="/admin/users" className={navLinkClasses}>
-                    <Users className="h-4 w-4" />
-                    Users
-                  </NavLink>
-                  <NavLink to="/admin/institutions" className={navLinkClasses}>
-                    <Building2 className="h-4 w-4" />
-                    Institutions
+                  <NavLink to="/admin/settings" className={navLinkClasses}>
+                    <Settings className="h-4 w-4" />
+                    Settings
                   </NavLink>
                   <NavLink to="/admin/logs" className={navLinkClasses}>
                     <FileText className="h-4 w-4" />
                     System Logs
-                  </NavLink>
-                  <NavLink to="/admin/emails" className={navLinkClasses}>
-                    <Mail className="h-4 w-4" />
-                    Email Templates
-                  </NavLink>
-                  <NavLink to="/admin/roles" className={navLinkClasses}>
-                    <ShieldCheck className="h-4 w-4" />
-                    Roles & Permissions
-                  </NavLink>
-                  <NavLink to="/admin/settings" className={navLinkClasses}>
-                    <Settings className="h-4 w-4" />
-                    Settings
                   </NavLink>
                 </>
               )}

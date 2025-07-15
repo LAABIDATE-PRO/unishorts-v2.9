@@ -22,8 +22,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import PhoneNumberInput from './PhoneNumberInput';
 import { Value } from 'react-phone-number-input';
+import { PasswordInput } from './PasswordInput';
 
-const signUpSchema = z.object({
+const baseSignUpSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }),
   last_name: z.string().min(1, { message: 'Last name is required.' }),
   username: z.string()
@@ -33,9 +34,15 @@ const signUpSchema = z.object({
   university_email: z.string().email({ message: 'Please enter a valid university email.' }),
   institution_name: z.string().min(1, { message: 'Institution name is required.' }),
   phone_number: z.string().min(1, { message: 'Phone number is required.' }),
-  short_bio: z.string().min(10, { message: 'Please provide a brief reason for joining (at least 10 characters).' }).max(500, "Reason must not exceed 500 characters."),
+  join_reason: z.string().min(10, { message: 'Please provide a brief reason for joining (at least 10 characters).' }).max(500, "Reason must not exceed 500 characters."),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  confirmPassword: z.string().min(6, { message: 'Please confirm your password.' }),
   terms: z.boolean().refine(val => val === true, { message: 'You must accept the terms and conditions.' }),
+});
+
+const signUpSchema = baseSignUpSchema.refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
@@ -45,7 +52,6 @@ const SignUpForm = () => {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [showContactSupportDialog, setShowContactSupportDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
   const navigate = useNavigate();
 
   const form = useForm<SignUpFormValues>({
@@ -58,8 +64,9 @@ const SignUpForm = () => {
       university_email: '',
       institution_name: '',
       phone_number: '',
-      short_bio: '',
+      join_reason: '',
       password: '',
+      confirmPassword: '',
       terms: false,
     },
   });
@@ -68,7 +75,7 @@ const SignUpForm = () => {
 
   const checkUsernameAvailability = async () => {
     const username = form.getValues('username');
-    const usernameValidation = signUpSchema.shape.username.safeParse(username);
+    const usernameValidation = baseSignUpSchema.shape.username.safeParse(username);
     if (!usernameValidation.success) {
       form.setError('username', { type: 'manual', message: usernameValidation.error.errors[0].message });
       return;
@@ -99,7 +106,7 @@ const SignUpForm = () => {
       return;
     }
     setIsLoading(true);
-    const { password, terms, ...profileData } = values;
+    const { password, terms, confirmPassword, ...profileData } = values;
 
     const { error: functionError } = await supabase.functions.invoke('custom-signup', {
       body: {
@@ -112,7 +119,7 @@ const SignUpForm = () => {
           university_email: profileData.university_email,
           institution_name: profileData.institution_name,
           phone_number: profileData.phone_number,
-          short_bio: profileData.short_bio,
+          join_reason: profileData.join_reason,
         },
       },
     });
@@ -142,19 +149,22 @@ const SignUpForm = () => {
       return;
     }
 
-    const { error: resendError } = await supabase.auth.resend({
-      type: 'signup',
+    // Sign in the user to trigger session context and redirect
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: values.university_email,
+      password: values.password,
     });
 
-    if (resendError) {
-      showError(`Account created, but we failed to send a verification email. Please try logging in and resending it. Error: ${resendError.message}`);
+    setIsLoading(false);
+
+    if (signInError) {
+      showError("Account created, but we couldn't log you in automatically. Please log in manually.");
+      navigate('/login');
     } else {
-      setRegisteredEmail(values.university_email);
+      // The SessionContextProvider will now have the session and profile,
+      // and will automatically redirect to /pending-approval.
       setShowSuccessDialog(true);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -178,6 +188,7 @@ const SignUpForm = () => {
                   <FormControl>
                     <Input 
                       placeholder="Username (for your profile page)" 
+                      autoComplete="off"
                       {...field} 
                       onChange={(e) => {
                         field.onChange(e);
@@ -220,11 +231,14 @@ const SignUpForm = () => {
               </FormItem>
             )}
           />
-          <FormField control={form.control} name="short_bio" render={({ field }) => (
-            <FormItem><FormControl><Textarea placeholder="Why do you want to join our platform?" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormField control={form.control} name="join_reason" render={({ field }) => (
+            <FormItem><FormControl><Textarea placeholder="Why do you want to join our platform? (for admin review)" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="password" render={({ field }) => (
-            <FormItem><FormControl><Input type="password" placeholder="Password" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormControl><PasswordInput placeholder="Password" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+            <FormItem><FormControl><PasswordInput placeholder="Confirm Password" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="terms" render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
@@ -253,11 +267,11 @@ const SignUpForm = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Registration Successful!</AlertDialogTitle>
             <AlertDialogDescription>
-              We have sent a verification link to <strong>{registeredEmail}</strong>. Please check your inbox and click the link to activate your account.
+              Your account has been created and is now pending review by our team. You will be notified by email once it's approved.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => navigate('/login')}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => navigate('/pending-approval')}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, Phone, Building, BookOpen, Calendar, Film as FilmIcon } from 'lucide-react';
+import { User, Mail, Phone, Building, BookOpen, Calendar, Film as FilmIcon, MessageSquare } from 'lucide-react';
 import { AdminUser, Film } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,7 +72,13 @@ const UserDetailDialog = ({ user, onClose }: UserDetailDialogProps) => {
             User profile details and published films.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
+          {user.join_reason && (
+            <div className="space-y-2 p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-lg flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Reason for Joining</h3>
+              <p className="text-sm text-muted-foreground">{user.join_reason}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Contact Information</h3>
@@ -109,7 +115,7 @@ const UserDetailDialog = ({ user, onClose }: UserDetailDialogProps) => {
           </div>
           {user.short_bio && (
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">Short Bio</h3>
+              <h3 className="font-semibold text-lg">Public Bio</h3>
               <p className="text-sm text-muted-foreground">{user.short_bio}</p>
             </div>
           )}

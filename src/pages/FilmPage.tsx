@@ -58,32 +58,6 @@ const FilmPage = () => {
     fetchFilm();
   }, [id]);
 
-  const handleViewIncrement = async (filmId: string) => {
-    setFilm(currentFilm => {
-      if (!currentFilm) return null;
-      return { ...currentFilm, view_count: currentFilm.view_count + 1 };
-    });
-
-    try {
-      const { error } = await supabase.functions.invoke('increment-view-count', {
-        body: { film_id: filmId },
-      });
-      if (error) {
-        console.error('Failed to increment view count in DB:', error);
-        setFilm(currentFilm => {
-          if (!currentFilm) return null;
-          return { ...currentFilm, view_count: currentFilm.view_count - 1 };
-        });
-      }
-    } catch (error) {
-      console.error('Failed to invoke view count function', error);
-       setFilm(currentFilm => {
-        if (!currentFilm) return null;
-        return { ...currentFilm, view_count: currentFilm.view_count - 1 };
-      });
-    }
-  };
-
   if (isLoading) {
     return <FilmPageSkeleton />;
   }
@@ -113,7 +87,6 @@ const FilmPage = () => {
           <div className="aspect-video overflow-hidden rounded-lg bg-black shadow-lg">
             <FilmVideoPlayer 
               film={film}
-              onViewIncrement={handleViewIncrement}
               isLocked={!session}
             />
           </div>

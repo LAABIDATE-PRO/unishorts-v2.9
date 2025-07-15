@@ -1,127 +1,73 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Film, Notification as NotificationType } from '@/types';
+import { Film } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Check, X, Trash2, Edit, Eye } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoreHorizontal, CheckCircle, XCircle, Eye, Trash2 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import RejectFilmDialog from '@/components/admin/RejectFilmDialog';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { logEvent } from '@/utils/logger';
-
-type FilmWithProfile = Film & { first_name: string | null; last_name: string | null };
-
-// Function to fetch films, to be used with React Query
-const fetchAdminFilms = async (): Promise<FilmWithProfile[]> => {
-  const { data, error } = await supabase.rpc('get_all_films_with_profiles');
-  if (error) {
-    throw new Error(error.message);
-  }
-  return data || [];
-};
+import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const AdminFilms = () => {
+  const [films, setFilms] = useState<Film[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState('in_review');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [filmToReject, setFilmToReject] = useState<Film | null>(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isRejecting, setIsRejecting] = useState<FilmWithProfile | null>(null);
 
-  // Use useQuery to fetch films
-  const { data: films = [], isLoading, error: fetchError } = useQuery<FilmWithProfile[]>({
-    queryKey: ['adminFilms'],
-    queryFn: fetchAdminFilms,
-  });
-
-  // Show error if fetching fails
   useEffect(() => {
-    if (fetchError) {
-      showError('Failed to fetch films: ' + fetchError.message);
-      console.error('Error fetching films:', fetchError);
-    }
-  }, [fetchError]);
+    const fetchFilms = async () => {
+      setIsLoading(true);
+      let query = supabase.from('films').select('*').order('created_at', { ascending: false });
 
-  // Mutation for updating film status
-  const updateFilmStatusMutation = useMutation({
-    mutationFn: async ({ film, status, rejection_reason }: { film: FilmWithProfile; status: Film['status']; rejection_reason: string | null }) => {
-      let updateData: Partial<Film> = { status, rejection_reason };
-      if (status === 'published') {
-        updateData.visibility = 'public'; // Ensure film is public when published
+      if (filter !== 'all') {
+        query = query.eq('status', filter);
       }
-      const { error } = await supabase.from('films').update(updateData).eq('id', film.id);
-      if (error) throw error;
-
-      // Create notification
-      let notificationMessage = '';
-      let notificationType: NotificationType['type'] | null = null;
-      let url = `/film/${film.id}`;
-
-      if (status === 'published') {
-        notificationMessage = `Your film "${film.title}" has been approved and is now live!`;
-        notificationType = 'film_approved';
-      } else if (status === 'rejected') {
-        notificationMessage = `Your film "${film.title}" was not approved. Reason: ${rejection_reason || 'No reason provided.'}`;
-        notificationType = 'film_rejected';
-        url = `/film/${film.id}/edit`; // Link to edit page for rejection
+      if (debouncedSearchTerm) {
+        query = query.ilike('title', `%${debouncedSearchTerm}%`);
       }
 
-      if (notificationType && film.user_id) {
-        const { error: notificationError } = await supabase.from('notifications').insert({
-          user_id: film.user_id,
-          type: notificationType,
-          message: notificationMessage,
-          url: url,
-          related_entity_id: film.id,
-        });
-        if (notificationError) {
-          console.error('Failed to create notification:', notificationError);
-        }
+      const { data, error } = await query;
+      if (error) {
+        showError('Failed to fetch films.');
+        console.error(error);
+      } else {
+        setFilms(data || []);
       }
-      return null;
-    },
-    onSuccess: () => {
-      showSuccess('Film status updated successfully.');
-      queryClient.invalidateQueries({ queryKey: ['adminFilms'] }); // Invalidate to re-fetch films
-    },
-    onError: (error: Error) => {
-      showError(`Failed to update film status: ${error.message}`);
-    },
-  });
+      setIsLoading(false);
+    };
+    fetchFilms();
+  }, [filter, debouncedSearchTerm]);
 
-  // Mutation for deleting film
-  const deleteFilmMutation = useMutation({
-    mutationFn: async (filmId: string) => {
-      const { error } = await supabase.from('films').delete().eq('id', filmId);
-      if (error) throw error;
-      return null;
-    },
-    onSuccess: () => {
-      showSuccess('Film deleted successfully.');
-      queryClient.invalidateQueries({ queryKey: ['adminFilms'] }); // Invalidate to re-fetch films
-    },
-    onError: (error: Error) => {
-      showError(`Failed to delete film: ${error.message}`);
-    },
-  });
-
-  const handleUpdateFilmStatus = (film: FilmWithProfile, status: Film['status'], rejection_reason: string | null = null) => {
-    updateFilmStatusMutation.mutate({ film, status, rejection_reason });
-    if (status === 'published') {
-      logEvent('FILM_APPROVED', { filmId: film.id, filmTitle: film.title, message: `Film "${film.title}" was approved.` });
-    } else if (status === 'rejected') {
-      logEvent('FILM_REJECTED', { filmId: film.id, filmTitle: film.title, reason: rejection_reason, message: `Film "${film.title}" was rejected.` });
+  const updateFilmStatus = async (filmId: string, status: Film['status'], rejection_reason?: string) => {
+    const { error } = await supabase
+      .from('films')
+      .update({ status, rejection_reason: rejection_reason || null })
+      .eq('id', filmId);
+    
+    if (error) {
+      showError(`Failed to update film status.`);
+    } else {
+      showSuccess(`Film has been ${status}.`);
+      setFilms(films.filter(f => f.id !== filmId));
     }
   };
 
-  const handleDeleteFilm = (filmId: string) => {
+  const deleteFilm = async (filmId: string) => {
     if (!confirm('Are you sure you want to permanently delete this film?')) return;
-    const filmToDelete = films.find(f => f.id === filmId);
-    deleteFilmMutation.mutate(filmId);
-    if (filmToDelete) {
-      logEvent('FILM_DELETED', { filmId: filmToDelete.id, filmTitle: filmToDelete.title, message: `Film "${filmToDelete.title}" was deleted.` });
+    const { error } = await supabase.from('films').delete().eq('id', filmId);
+    if (error) {
+      showError('Failed to delete film.');
+    } else {
+      showSuccess('Film deleted successfully.');
+      setFilms(films.filter(f => f.id !== filmId));
     }
   };
 
@@ -130,79 +76,83 @@ const AdminFilms = () => {
       case 'published': return <Badge variant="default" className="bg-green-500">Published</Badge>;
       case 'in_review': return <Badge variant="secondary">In Review</Badge>;
       case 'rejected': return <Badge variant="destructive">Rejected</Badge>;
-      case 'draft': return <Badge variant="outline">Draft</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
 
-  if (isLoading) {
-    return <Card><CardContent className="p-6"><Skeleton className="h-80 w-full" /></CardContent></Card>
-  }
-
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Films</CardTitle>
-          <CardDescription>Review, approve, reject, or delete film submissions.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Submitter</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Views</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
+    <Card>
+      <CardHeader>
+        <CardTitle>Film Management</CardTitle>
+        <CardDescription>Approve, reject, and manage all film submissions.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Button variant={filter === 'in_review' ? 'default' : 'outline'} onClick={() => setFilter('in_review')}>In Review</Button>
+            <Button variant={filter === 'published' ? 'default' : 'outline'} onClick={() => setFilter('published')}>Published</Button>
+            <Button variant={filter === 'rejected' ? 'default' : 'outline'} onClick={() => setFilter('rejected')}>Rejected</Button>
+            <Button variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>All</Button>
+          </div>
+          <Input 
+            placeholder="Search by title..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Director</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Submitted</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
+            ) : films.length > 0 ? films.map(film => (
+              <TableRow key={film.id}>
+                <TableCell className="font-medium">{film.title}</TableCell>
+                <TableCell>{film.director_names}</TableCell>
+                <TableCell>{getStatusBadge(film.status)}</TableCell>
+                <TableCell>{new Date(film.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {film.status === 'in_review' && (
+                        <>
+                          <DropdownMenuItem onClick={() => updateFilmStatus(film.id, 'published')}><CheckCircle className="mr-2 h-4 w-4" />Approve</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFilmToReject(film)}><XCircle className="mr-2 h-4 w-4" />Reject</DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuItem onClick={() => navigate(`/film/${film.id}`)}><Eye className="mr-2 h-4 w-4" />View Film</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600" onClick={() => deleteFilm(film.id)}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {films.length > 0 ? films.map(film => (
-                <TableRow key={film.id}>
-                  <TableCell className="font-medium">{film.title}</TableCell>
-                  <TableCell>{(film.first_name && film.last_name) ? `${film.first_name} ${film.last_name}` : 'N/A'}</TableCell>
-                  <TableCell>{getStatusBadge(film.status)}</TableCell>
-                  <TableCell>{(film.view_count || 0).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(film.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {film.status === 'in_review' && (
-                          <>
-                            <DropdownMenuItem onClick={() => handleUpdateFilmStatus(film, 'published')}><Check className="mr-2 h-4 w-4 text-green-500" />Approve</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setIsRejecting(film)}><X className="mr-2 h-4 w-4" />Reject</DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuItem onClick={() => navigate(`/film/${film.id}`)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/film/${film.id}/edit`)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteFilm(film.id)}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )) : (
-                <TableRow><TableCell colSpan={6} className="text-center">No films found.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      {isRejecting && (
-        <RejectFilmDialog
-          film={isRejecting}
-          onClose={() => setIsRejecting(null)}
-          onConfirm={(reason) => {
-            if (isRejecting) {
-              handleUpdateFilmStatus(isRejecting, 'rejected', reason);
-            }
-            setIsRejecting(null);
-          }}
-        />
-      )}
-    </>
+            )) : (
+              <TableRow><TableCell colSpan={5} className="text-center">No films found for this filter.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {filmToReject && (
+          <RejectFilmDialog
+            film={filmToReject}
+            onClose={() => setFilmToReject(null)}
+            onConfirm={(reason) => {
+              updateFilmStatus(filmToReject.id, 'rejected', reason);
+              setFilmToReject(null);
+            }}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

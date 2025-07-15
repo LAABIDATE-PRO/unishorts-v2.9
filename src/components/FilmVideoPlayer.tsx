@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Film } from '@/types';
 import { Link } from 'react-router-dom';
 import { AspectRatio } from './ui/aspect-ratio';
@@ -7,23 +7,77 @@ import { Lock } from 'lucide-react';
 import Plyr from 'plyr-react';
 import 'plyr-react/plyr.css';
 import { APITypes } from 'plyr-react';
+import { useSession } from './SessionContextProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FilmVideoPlayerProps {
   film: Film;
-  onViewIncrement: (filmId: string) => void;
   isLocked: boolean;
 }
 
-const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, onViewIncrement, isLocked }) => {
+const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => {
   const ref = useRef<APITypes>(null);
-  const [hasIncrementedView, setHasIncrementedView] = useState(false);
+  const [hasLoggedView, setHasLoggedView] = useState(false);
+  const { session } = useSession();
 
-  const handlePlay = () => {
-    if (!hasIncrementedView) {
-      onViewIncrement(film.id);
-      setHasIncrementedView(true);
+  const logView = async (durationWatched: number, watchPercentage: number) => {
+    if (hasLoggedView) return;
+    setHasLoggedView(true); // Prevent multiple logs for the same session
+
+    let anonymousId = null;
+    if (!session?.user) {
+      anonymousId = localStorage.getItem('anonymous_id');
+      if (!anonymousId) {
+        anonymousId = uuidv4();
+        localStorage.setItem('anonymous_id', anonymousId);
+      }
+    }
+
+    try {
+      await supabase.functions.invoke('log-film-view', {
+        body: {
+          film_id: film.id,
+          user_id: session?.user?.id,
+          anonymous_id: anonymousId,
+          duration_watched_seconds: Math.round(durationWatched),
+          watch_percentage: watchPercentage,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to log film view:', error);
+      // Don't show error to user, just log it.
+      // Revert state to allow another attempt if needed.
+      setHasLoggedView(false);
     }
   };
+
+  const handleTimeUpdate = () => {
+    if (!ref.current?.plyr || hasLoggedView) return;
+    const player = ref.current.plyr;
+    const currentTime = player.currentTime;
+    const duration = player.duration;
+
+    if (duration > 0) {
+      const percentage = (currentTime / duration) * 100;
+      if (percentage >= 40) {
+        logView(currentTime, percentage);
+      }
+    }
+  };
+  
+  useEffect(() => {
+    const player = ref.current?.plyr;
+    if (player) {
+      player.on('timeupdate', handleTimeUpdate);
+    }
+    return () => {
+      if (player) {
+        player.off('timeupdate', handleTimeUpdate);
+      }
+    };
+  }, [ref, hasLoggedView]);
+
 
   const videoSrc = {
     type: 'video',
@@ -87,7 +141,6 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, onViewIncrement
                 options: [1080, 720, 480],
               },
             }}
-            onPlay={handlePlay}
           />
         )}
       </AspectRatio>

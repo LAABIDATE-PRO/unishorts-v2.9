@@ -9,7 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// List of common free email providers to block
 const blockedDomains = new Set([
   'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'mail.com'
 ]);
@@ -19,129 +18,91 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
   try {
     const { email, password, data } = await req.json()
-    if (!email || !password || !data) {
-      return new Response(JSON.stringify({ error: 'Email, password, and data are required' }), {
+    if (!email || !password || !data || !data.username) {
+      return new Response(JSON.stringify({ error: 'Email, password, and user data (including username) are required' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Step 1: Validate the email domain
+    // --- Pre-flight Checks ---
     const emailDomain = email.split('@')[1];
     if (!emailDomain) {
-        return new Response(JSON.stringify({ error: 'Invalid email format.' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-        });
+        return new Response(JSON.stringify({ error: 'Invalid email format.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
     }
-
-    // Check if the domain is on the blocked list of free providers
     if (blockedDomains.has(emailDomain.toLowerCase())) {
-      return new Response(JSON.stringify({ error: 'Please use a valid university email address. Free email providers are not accepted.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
+      return new Response(JSON.stringify({ error: 'Please use a valid university email address. Free email providers are not accepted.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
     }
-
-    // Step 2: Check if the domain is on the approved list
-    const { count, error: domainError } = await supabaseAdmin
-      .from('institutions')
-      .select('id', { count: 'exact', head: true })
-      .filter('approved_domains', 'cs', `{${emailDomain}}`);
-
+    const { count: domainCount, error: domainError } = await supabaseAdmin.from('institutions').select('id', { count: 'exact', head: true }).filter('approved_domains', 'cs', `{${emailDomain}}`);
     if (domainError) {
         console.error('Error checking domain:', domainError);
         throw new Error('Could not verify university domain.');
     }
-
-    if (count === 0) {
-      return new Response(JSON.stringify({ error: 'The provided email does not belong to an approved university. Please contact support if you believe this is an error.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
+    if (domainCount === 0) {
+      return new Response(JSON.stringify({ error: 'The provided email does not belong to an approved university. Please contact support if you believe this is an error.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
     }
 
-    // Step 3: Create the user in auth.users
+    const { count: usernameCount, error: usernameError } = await supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).eq('username', data.username);
+    if (usernameError) {
+      console.error('Error checking username:', usernameError);
+      throw new Error('Could not verify username.');
+    }
+    if (usernameCount > 0) {
+      return new Response(JSON.stringify({ error: 'This username is already taken.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 });
+    }
+
+    // --- User & Profile Creation ---
     const { data: userData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      user_metadata: data,
-      email_confirm: false, // We will trigger the email from the client
+      email_confirm: true, // User is confirmed automatically
+      user_metadata: { 
+        first_name: data.first_name,
+        last_name: data.last_name,
+      },
     })
 
     if (authError) {
-      console.error('Error creating user:', authError)
-      return new Response(JSON.stringify({ error: authError.message }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      })
+      console.error('Error creating user in auth:', authError)
+      return new Response(JSON.stringify({ error: authError.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: authError.status || 400 })
     }
 
-    if (!userData.user) {
+    const user = userData.user;
+    if (!user) {
         throw new Error("User creation did not return a user object.");
     }
 
-    // Step 4: Create the profile in public.profiles
     const profileData = {
-        id: userData.user.id,
+        id: user.id,
         first_name: data.first_name,
         last_name: data.last_name,
         username: data.username,
         university_email: data.university_email,
         institution_name: data.institution_name,
         phone_number: data.phone_number,
-        short_bio: data.short_bio,
+        join_reason: data.join_reason,
         role: 'user',
-        account_status: 'pending_email_verification' // Set initial status
+        account_status: 'pending_admin_approval' // Set status directly to pending approval
     };
-
-    const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert(profileData);
-
+    const { error: profileError } = await supabaseAdmin.from('profiles').insert(profileData);
+    
     if (profileError) {
-        console.error('Error creating profile:', profileError);
-        await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
-        
-        if (profileError.code === '23505') { // Unique constraint violation
-            return new Response(JSON.stringify({ error: 'This username is already taken. Please choose another one.' }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 409, // Conflict
-            });
-        }
-
-        return new Response(JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
-        });
+      console.error('Error creating profile, rolling back user:', profileError);
+      await supabaseAdmin.auth.admin.deleteUser(user.id);
+      return new Response(JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
     }
 
-    // Log the registration event
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]
-    await supabaseAdmin.from('system_logs').insert({
-      user_id: userData.user.id,
-      user_email: userData.user.email,
-      action: 'USER_REGISTER',
-      details: { message: `New user registered: ${userData.user.email}` },
-      ip_address: ip,
-    })
+    return new Response(JSON.stringify({ message: "User created successfully. Your account is pending admin approval." }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 201 })
 
-    return new Response(JSON.stringify(userData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
   } catch (e) {
-    console.error(e)
-    return new Response(JSON.stringify({ error: e.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('Top-level signup error:', e)
+    return new Response(JSON.stringify({ error: e.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })
   }
 })

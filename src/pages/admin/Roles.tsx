@@ -1,121 +1,106 @@
-import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Permission, RolePermission } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { showError, showSuccess } from '@/utils/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const fetchPermissions = async (): Promise<Permission[]> => {
-  const { data, error } = await supabase.from('permissions').select('*');
-  if (error) throw new Error(error.message);
-  return data;
-};
-
-const fetchRolePermissions = async (): Promise<RolePermission[]> => {
-  const { data, error } = await supabase.from('role_permissions').select('*');
-  if (error) throw new Error(error.message);
-  return data;
-};
-
-const ROLES = ['admin', 'moderator', 'reviewer', 'user'];
+const roles = ['admin', 'moderator', 'user'];
 
 const AdminRoles = () => {
-  const queryClient = useQueryClient();
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<Record<string, number[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: permissions = [], isLoading: isLoadingPermissions } = useQuery<Permission[]>({
-    queryKey: ['permissions'],
-    queryFn: fetchPermissions,
-  });
+  const fetchData = async () => {
+    setIsLoading(true);
+    const { data: perms, error: permsError } = await supabase.from('permissions').select('*');
+    const { data: rolePerms, error: rolePermsError } = await supabase.from('role_permissions').select('*');
 
-  const { data: rolePermissions = [], isLoading: isLoadingRolePermissions } = useQuery<RolePermission[]>({
-    queryKey: ['rolePermissions'],
-    queryFn: fetchRolePermissions,
-  });
-
-  const permissionsMap = useMemo(() => {
-    const map = new Map<string, Set<number>>();
-    for (const rp of rolePermissions) {
-      if (!map.has(rp.role)) {
-        map.set(rp.role, new Set());
-      }
-      map.get(rp.role)!.add(rp.permission_id);
+    if (permsError || rolePermsError) {
+      showError('Failed to load permissions data.');
+    } else {
+      setPermissions(perms || []);
+      const rpMap: Record<string, number[]> = {};
+      (rolePerms || []).forEach(rp => {
+        if (!rpMap[rp.role]) rpMap[rp.role] = [];
+        rpMap[rp.role].push(rp.permission_id);
+      });
+      setRolePermissions(rpMap);
     }
-    return map;
-  }, [rolePermissions]);
+    setIsLoading(false);
+  };
 
-  const togglePermissionMutation = useMutation({
-    mutationFn: async ({ role, permissionId, hasPermission }: { role: string; permissionId: number; hasPermission: boolean }) => {
-      if (hasPermission) {
-        const { error } = await supabase.from('role_permissions').delete().match({ role, permission_id: permissionId });
-        if (error) throw error;
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handlePermissionChange = (role: string, permissionId: number, checked: boolean) => {
+    setRolePermissions(prev => {
+      const currentPerms = prev[role] || [];
+      if (checked) {
+        return { ...prev, [role]: [...currentPerms, permissionId] };
       } else {
-        const { error } = await supabase.from('role_permissions').insert({ role, permission_id: permissionId });
-        if (error) throw error;
+        return { ...prev, [role]: currentPerms.filter(id => id !== permissionId) };
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rolePermissions'] });
-      showSuccess('Permission updated.');
-    },
-    onError: (error: Error) => {
-      showError(`Update failed: ${error.message}`);
-    },
-  });
+    });
+  };
 
-  const isLoading = isLoadingPermissions || isLoadingRolePermissions;
+  const handleSaveChanges = async (role: string) => {
+    const permissionIds = rolePermissions[role] || [];
+    
+    // Delete existing permissions for the role
+    const { error: deleteError } = await supabase.from('role_permissions').delete().eq('role', role);
+    if (deleteError) {
+      showError(`Failed to update permissions for ${role}.`);
+      return;
+    }
+
+    // Insert new permissions
+    if (permissionIds.length > 0) {
+      const newRolePerms = permissionIds.map(pid => ({ role, permission_id: pid }));
+      const { error: insertError } = await supabase.from('role_permissions').insert(newRolePerms);
+      if (insertError) {
+        showError(`Failed to update permissions for ${role}.`);
+        return;
+      }
+    }
+    
+    showSuccess(`Permissions for ${role} updated successfully.`);
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-96 w-full" />;
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Roles & Permissions</CardTitle>
-        <CardDescription>Define what each user role can and cannot do across the platform.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Permission</TableHead>
-              {ROLES.map(role => <TableHead key={role} className="text-center capitalize">{role}</TableHead>)}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={ROLES.length + 1}><Skeleton className="h-8 w-full" /></TableCell>
-                </TableRow>
-              ))
-            ) : (
-              permissions.map(permission => {
-                return (
-                  <TableRow key={permission.id}>
-                    <TableCell>
-                      <p className="font-medium">{permission.action}</p>
-                      <p className="text-xs text-muted-foreground">{permission.description}</p>
-                    </TableCell>
-                    {ROLES.map(role => {
-                      const hasPermission = permissionsMap.get(role)?.has(permission.id) ?? false;
-                      return (
-                        <TableCell key={role} className="text-center">
-                          <Checkbox
-                            checked={hasPermission}
-                            disabled={role === 'admin'}
-                            onCheckedChange={() => togglePermissionMutation.mutate({ role, permissionId: permission.id, hasPermission })}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div className="grid md:grid-cols-3 gap-6">
+      {roles.map(role => (
+        <Card key={role}>
+          <CardHeader>
+            <CardTitle className="capitalize">{role}</CardTitle>
+            <CardDescription>Set permissions for the {role} role.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {permissions.map(permission => (
+              <div key={permission.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${role}-${permission.id}`}
+                  checked={(rolePermissions[role] || []).includes(permission.id)}
+                  onCheckedChange={(checked) => handlePermissionChange(role, permission.id, !!checked)}
+                />
+                <label htmlFor={`${role}-${permission.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {permission.action}
+                </label>
+              </div>
+            ))}
+            <Button className="w-full mt-4" onClick={() => handleSaveChanges(role)}>Save Changes</Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 

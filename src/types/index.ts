@@ -3,6 +3,7 @@ export type Profile = {
   username: string;
   first_name: string;
   last_name: string;
+  join_reason: string | null;
   short_bio: string | null;
   avatar_url: string | null;
   created_at: string;
@@ -10,7 +11,11 @@ export type Profile = {
   institution_name: string | null;
   phone_number: string | null;
   role: 'user' | 'admin' | 'moderator' | 'reviewer';
-  account_status?: 'active' | 'disabled' | 'banned' | 'pending_email_verification' | 'pending_admin_approval' | 'rejected';
+  account_status?: 'active' | 'disabled' | 'banned' | 'pending_admin_approval' | 'rejected';
+  welcome_popup_shown?: boolean;
+  profile_visibility: 'public' | 'private' | 'followers_only';
+  social_media_links: Record<string, string> | null;
+  auto_save_favorites: boolean;
 };
 
 export type Film = {
@@ -115,7 +120,7 @@ export type AdminUser = {
   university_email: string | null;
   institution_name: string | null;
   role: string | null;
-  account_status: 'active' | 'disabled' | 'banned' | 'pending_email_verification' | 'pending_admin_approval' | 'rejected' | null;
+  account_status: 'active' | 'disabled' | 'banned' | 'pending_admin_approval' | 'rejected' | null;
   last_sign_in_at: string | null;
   avatar_url: string | null;
   film_count: number | null;
@@ -125,6 +130,7 @@ export type AdminUser = {
   short_bio: string | null;
   phone_number: string | null;
   created_at: string;
+  join_reason: string | null;
 };
 
 export type SystemLog = {
@@ -163,4 +169,16 @@ export type RolePermission = {
   id: number;
   role: string;
   permission_id: number;
+};
+
+export type SupportTicket = {
+  id: string;
+  user_id: string;
+  subject: string;
+  message: string;
+  screenshot_url: string | null;
+  status: string;
+  created_at: string;
+  user_email: string | null;
+  user_name: string | null;
 };

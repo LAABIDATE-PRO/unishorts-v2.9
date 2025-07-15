@@ -3,7 +3,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Film, User, LogOut, LayoutDashboard, Settings, Bell, Sparkles } from 'lucide-react';
+import { Menu, Film, User, LogOut, LayoutDashboard, Settings, Bell, Shield } from 'lucide-react';
 import { useSession } from '@/components/SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,7 +27,6 @@ export default function Header() {
       toast.error('Failed to log out: ' + error.message);
     } else {
       toast.success('Logged out successfully');
-      navigate('/');
     }
   };
 
@@ -52,9 +51,6 @@ export default function Header() {
             <Link to="/upload" className="transition-colors hover:text-primary text-foreground/80">
               Submit Film
             </Link>
-            <Link to="/idea-generator" className="transition-colors hover:text-primary text-foreground/80">
-              Idea Generator
-            </Link>
           </nav>
         </div>
 
@@ -74,7 +70,6 @@ export default function Header() {
               <nav className="grid gap-2 py-6">
                 <Link to="/explore" className="flex w-full items-center py-2 text-lg font-semibold">Explore</Link>
                 <Link to="/upload" className="flex w-full items-center py-2 text-lg font-semibold">Submit Film</Link>
-                <Link to="/idea-generator" className="flex w-full items-center py-2 text-lg font-semibold">Idea Generator</Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -118,10 +113,15 @@ export default function Header() {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/idea-generator')}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    <span>Idea Generator</span>
-                  </DropdownMenuItem>
+                  {(profile?.role === 'admin' || profile?.role === 'moderator') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />

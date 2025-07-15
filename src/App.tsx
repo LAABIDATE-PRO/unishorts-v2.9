@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
@@ -17,31 +17,89 @@ import Privacy from '@/pages/Privacy';
 import Notifications from '@/pages/Notifications';
 import PendingApproval from '@/pages/PendingApproval';
 import Rejected from '@/pages/Rejected';
-import FilmIdeaGenerator from '@/pages/FilmIdeaGenerator';
-import VerifyEmail from '@/pages/VerifyEmail';
+import ForgotPassword from '@/pages/ForgotPassword';
+import UpdatePassword from '@/pages/UpdatePassword';
+import ContactSupport from '@/pages/ContactSupport';
+import SuggestFeature from '@/pages/SuggestFeature';
 
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminRoute from '@/components/admin/AdminRoute';
 import AdminDashboard from '@/pages/admin/Dashboard';
-import AdminFilms from '@/pages/admin/Films';
-import AdminUsers from '@/pages/admin/Users';
+import AdminManagement from '@/pages/admin/Management';
 import AdminSettings from '@/pages/admin/Settings';
 import AdminLogs from '@/pages/admin/Logs';
-import AdminEmails from '@/pages/admin/Emails';
-import AdminInstitutions from '@/pages/admin/Institutions';
-import AdminRoles from '@/pages/admin/Roles';
+import AdminAnalytics from '@/pages/admin/Analytics';
+
 import AdminChoiceDialog from '@/components/AdminChoiceDialog';
 import { useAdBlockDetector } from './hooks/useAdBlockDetector';
 import AdBlockerDialog from './components/AdBlockerDialog';
-import CookieBanner from './components/CookieBanner';
+import { useSession } from './components/SessionContextProvider';
+import WelcomeDialog from './components/WelcomeDialog';
+
+function AuthStateRouter() {
+  const { session, profile, isLoading } = useSession();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const hash = location.hash;
+    if (hash.includes('type=recovery')) {
+      const searchParams = new URLSearchParams(hash.substring(1));
+      const accessToken = searchParams.get('access_token');
+      if (accessToken) {
+        // The user is in the password recovery flow.
+        // The UpdatePassword page will handle the token.
+        return;
+      }
+    }
+  }, [isLoading, location, session]);
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/upload" element={<UploadFilm />} />
+      <Route path="/film/:id/edit" element={<EditFilm />} />
+      <Route path="/explore" element={<Explore />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/u/:username" element={<Profile />} />
+      <Route path="/film/:id" element={<FilmPage />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/pending-approval" element={<PendingApproval />} />
+      <Route path="/rejected" element={<Rejected />} />
+      <Route path="/contact-support" element={<ContactSupport />} />
+      <Route path="/suggest-feature" element={<SuggestFeature />} />
+      
+      <Route path="/admin" element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="management" element={<AdminManagement />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="logs" element={<AdminLogs />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
 
 function App() {
   const isAdBlockerDetected = useAdBlockDetector();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { showWelcomePopup, markWelcomePopupAsShown, profile } = useSession();
 
   useEffect(() => {
     if (isAdBlockerDetected) {
-      // Use a session storage item to only show the dialog once per session
       if (!sessionStorage.getItem('adBlockerDialogShown')) {
         setIsDialogOpen(true);
         sessionStorage.setItem('adBlockerDialogShown', 'true');
@@ -51,44 +109,16 @@ function App() {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/upload" element={<UploadFilm />} />
-        <Route path="/film/:id/edit" element={<EditFilm />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/u/:username" element={<Profile />} />
-        <Route path="/film/:id" element={<FilmPage />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/pending-approval" element={<PendingApproval />} />
-        <Route path="/rejected" element={<Rejected />} />
-        <Route path="/idea-generator" element={<FilmIdeaGenerator />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        
-        <Route path="/admin" element={<AdminRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="films" element={<AdminFilms />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="settings" element={<AdminSettings />} />
-            <Route path="logs" element={<AdminLogs />} />
-            <Route path="emails" element={<AdminEmails />} />
-            <Route path="institutions" element={<AdminInstitutions />} />
-            <Route path="roles" element={<AdminRoles />} />
-          </Route>
-        </Route>
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AuthStateRouter />
       <AdminChoiceDialog />
       <AdBlockerDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
-      <CookieBanner />
+      {profile && (
+        <WelcomeDialog
+          isOpen={showWelcomePopup}
+          onClose={markWelcomePopupAsShown}
+          userName={`${profile.first_name} ${profile.last_name}`}
+        />
+      )}
     </>
   );
 }
