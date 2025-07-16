@@ -3,7 +3,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Film, User, LogOut, LayoutDashboard, Settings, Bell, Shield } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard, Settings, Bell, Shield } from 'lucide-react';
 import { useSession } from '@/components/SessionContextProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -43,8 +43,7 @@ export default function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="mr-4 hidden md:flex">
           <Link to="/" className="mr-6 flex items-center space-x-2">
-            <Film className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">UniShorts</span>
+            <img src="/full-logo.svg" alt="UniShorts Logo" className="h-7" />
           </Link>
           <nav className="flex items-center gap-6 text-sm font-medium">
             <Link to="/explore" className="transition-colors hover:text-primary text-foreground/80">
@@ -66,8 +65,7 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left">
               <Link to="/" className="mr-6 flex items-center space-x-2 mb-6">
-                <Film className="h-6 w-6 text-primary" />
-                <span className="font-bold">UniShorts</span>
+                <img src="/full-logo.svg" alt="UniShorts Logo" className="h-7" />
               </Link>
               <nav className="grid gap-2 py-6">
                 <Link to="/explore" className="flex w-full items-center py-2 text-lg font-semibold">Explore</Link>

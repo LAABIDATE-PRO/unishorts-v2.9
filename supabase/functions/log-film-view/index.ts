@@ -50,28 +50,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Anti-spam: Check for recent views from the same user/ip for the same film in the last 24 hours
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    let query = supabaseAdmin.from('film_views')
-      .select('id', { count: 'exact', head: true })
-      .eq('film_id', film_id)
-      .gte('created_at', twentyFourHoursAgo);
-
-    if (user_id) {
-      query = query.eq('user_id', user_id);
-    } else {
-      query = query.eq('anonymous_id', anonymous_id);
-    }
-
-    const { count, error: checkError } = await query;
-    if (checkError) throw checkError;
-    if (count > 0) {
-      return new Response(JSON.stringify({ message: 'View already logged recently for this user/film.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-
     // Get device info from headers
     const userAgent = req.headers.get('user-agent') || '';
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim();
