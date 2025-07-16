@@ -30,7 +30,7 @@ export default function Header() {
     }
   };
 
-  const getInitials = (firstName?: string, lastName?: string) => {
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
     const first = firstName?.[0] || '';
     const last = lastName?.[0] || '';
     return `${first}${last}`.toUpperCase();
@@ -90,7 +90,7 @@ export default function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile?.avatar_url || ''} alt={profile?.username || 'User'} />
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.username || 'User'} />
                       <AvatarFallback>{getInitials(profile?.first_name, profile?.last_name)}</AvatarFallback>
                     </Avatar>
                   </Button>

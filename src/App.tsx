@@ -35,7 +35,6 @@ import { useAdBlockDetector } from './hooks/useAdBlockDetector';
 import AdBlockerDialog from './components/AdBlockerDialog';
 import { useSession } from './components/SessionContextProvider';
 import WelcomeDialog from './components/WelcomeDialog';
-import { Profile as ProfileType } from './types';
 
 function AuthStateRouter() {
   const { session, isLoading } = useSession();
