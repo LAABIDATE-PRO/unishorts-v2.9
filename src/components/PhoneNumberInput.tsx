@@ -20,7 +20,7 @@ const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberInputProp
         onChange={onChange}
         inputComponent={Input}
         international
-        defaultCountry="MA"
+        defaultCountry="US"
         className="phone-number-input"
       />
     )

@@ -193,7 +193,7 @@ const UploadFilm = () => {
                     <FormItem><FormLabel>Director Name(s)</FormLabel><FormControl><Input placeholder="Creator names" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="institution" render={({ field }) => (
-                    <FormItem><FormLabel>Institution / School</FormLabel><FormControl><Input placeholder="e.g., ENSAD Casablanca" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Institution / School</FormLabel><FormControl><Input placeholder="e.g., University of Arts" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">

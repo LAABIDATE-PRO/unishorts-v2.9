@@ -80,13 +80,6 @@ const FilmVideoPlayer: React.FC<FilmVideoPlayerProps> = ({ film, isLocked }) => 
       },
     ],
     poster: film.thumbnail_url || '',
-    tracks: film.subtitles?.map(lang => ({
-      kind: 'subtitles',
-      label: lang.toUpperCase(),
-      srcLang: lang,
-      src: `/path/to/subtitles/${film.id}_${lang}.vtt`,
-      default: lang === 'en',
-    })) || [],
   };
 
   if (!film.video_url) {

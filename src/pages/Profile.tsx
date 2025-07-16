@@ -110,6 +110,8 @@ const Profile = () => {
     );
   }
 
+  const profileDisplayName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.username;
+
   return (
     <div className="bg-background min-h-screen">
       <Header />
@@ -123,7 +125,7 @@ const Profile = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold">{profile.first_name} {profile.last_name}</h1>
+            <h1 className="text-3xl font-bold">{profileDisplayName}</h1>
             <p className="text-muted-foreground">@{profile.username}</p>
           </div>
           {isOwnProfile && (

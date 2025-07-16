@@ -1,8 +1,8 @@
 export type Profile = {
   id: string;
   username: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   join_reason: string | null;
   short_bio: string | null;
   avatar_url: string | null;

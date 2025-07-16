@@ -53,6 +53,8 @@ const DirectorInfoCard = ({ userId }: DirectorInfoCardProps) => {
     );
   }
 
+  const directorDisplayName = [directorProfile.first_name, directorProfile.last_name].filter(Boolean).join(' ') || directorProfile.username;
+
   return (
     <div className="bg-card p-4 rounded-lg shadow-sm">
       <h2 className="text-xl font-semibold mb-4">About the Director</h2>
@@ -62,7 +64,7 @@ const DirectorInfoCard = ({ userId }: DirectorInfoCardProps) => {
           <AvatarFallback><User className="h-8 w-8" /></AvatarFallback>
         </Avatar>
         <div>
-          <h3 className="font-medium text-lg">{directorProfile.first_name} {directorProfile.last_name}</h3>
+          <h3 className="font-medium text-lg">{directorDisplayName}</h3>
           {directorProfile.username && (
             <Link to={`/u/${directorProfile.username}`} className="text-primary hover:underline text-sm">
               @{directorProfile.username}
