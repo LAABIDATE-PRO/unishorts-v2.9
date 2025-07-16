@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public.handle_email_verification() CASCADE;
